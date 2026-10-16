@@ -81,17 +81,17 @@ def _make_llm(with_tools:bool)-> Any:
         temperature=0,
     )
 
-    llm_fallback = ChatOpenAI(
+    """llm_fallback = ChatOpenAI(
         base_url=settings.OLLAMA_BASE_URL,
         api_key="ollama",
         model_name=settings.OLLAMA_MODEL_FALLBACK,
         temperature=0,
-    )
+    )"""
 
     if with_tools:
         llm = llm.bind_tools(TOOL_SCHEMAS)
-        llm_fallback = llm_fallback.bind_tools(TOOL_SCHEMAS)
-    return llm.with_fallbacks([llm_fallback])
+        #llm_fallback = llm_fallback.bind_tools(TOOL_SCHEMAS)
+    return llm
 
 LLM_TOOLS = _make_llm(with_tools=True)
 LLM_PLAIN = _make_llm(with_tools=False)
@@ -136,7 +136,7 @@ class AgentState(TypedDict):
 
 def agent_node(state: AgentState) -> dict[str, Any]:
     resp = LLM_TOOLS.invoke(state["messages"])
-    print(f"[LLM RESPONSE] -> {resp} \n")
+    #print(f"[LLM RESPONSE] -> {resp} \n")
     update: dict[str, Any] = {"messages": [resp], "steps": state["steps"]+1}
     if not resp.tool_calls:
         update["answer"] = (resp.content or "").strip()
@@ -211,8 +211,7 @@ def tools_node(state: AgentState):
         "tool_calls_log": log_adds,
     }
 
-def param_update_node(state: AgentState) -> dict[str, Any]:
-    last = state["messages"][-1].tool_calls()
+
 
 
 def force_final_node(state: AgentState) -> dict[str, Any]:
@@ -254,7 +253,6 @@ def _build_graph()-> Any:
     g = StateGraph(AgentState)
     g.add_node("agent", agent_node)
     g.add_node("tools", tools_node)
-    #g.add_node("update_params", param_update_node)
     g.add_node("force_final", force_final_node)
     g.add_node("finalize", finalize_node)
     g.add_edge(START, "agent")

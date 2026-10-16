@@ -14,13 +14,16 @@ def _resolve_path(value: str) -> str:
     return str(p if p.is_absolute() else (BASE_DIR / p))
 
 
+
+
+
 class Settings:
     # ---- Local LLM (Ollama, OpenAI-compatible endpoint) ----
     OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1") #http://localhost:11434/api/chat for ollama api
-    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:14b-instruct")
-    OLLAMA_MODEL_FALLBACK = os.getenv("OLLAMA_MODEL_FALLBACK", "qwen2.5:7b-instruct")
+    OLLAMA_MODEL = os.getenv("QWEN_MODEL", "qwen2.5:14b-instruct") 
+    #OLLAMA_MODEL_FALLBACK = os.getenv("QWEN_MODEL_FALLBACK", "qwen2.5:7b-instruct")
     
-    LLM_MODELS = [OLLAMA_MODEL, OLLAMA_MODEL_FALLBACK]
+    #LLM_MODELS = [OLLAMA_MODEL, OLLAMA_MODEL_FALLBACK]
     # ---- Embeddings + Vector store (all local) ----
     EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "intfloat/multilingual-e5-base")
     VECTOR_STORE_DIR = _resolve_path(os.getenv("VECTOR_STORE_DIR", "data/chroma_store"))

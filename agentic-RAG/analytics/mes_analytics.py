@@ -77,3 +77,4 @@ def fault_code_summary_API(df:pd.DataFrame,code: str) -> dict:
         "last_occurrence": code_df["date"].max(),
         "details": code_df.to_dict(orient="records"),
     }
+
