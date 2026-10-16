@@ -7,7 +7,7 @@ class Datatype(str, Enum):
     operations = "operations"
 
 def load_data(data: Datatype) -> pd.DataFrame:
-    df = pd.read_csv(f"mes/mes_{data.value}.csv")
+    df = pd.read_csv(f"mes/mes_{data.value}.csv", parse_dates=["date"])
     return df
 
 def filter_by_date(df, mask, start, end) -> pd.DataFrame:
