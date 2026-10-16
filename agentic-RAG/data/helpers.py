@@ -1,14 +1,20 @@
 import pandas as pd
 from pathlib import Path
+from enum import Enum
 
-def load_data(data_pth) -> pd.DataFrame:
-    return pd.read_csv(data_pth)
+class Datatype(str, Enum):
+    faults= "faults"
+    operations = "operations"
 
-def filter_by_date(df,start, end) -> pd.DataFrame:
+def load_data(data: Datatype) -> pd.DataFrame:
+    df = pd.read_csv(f"mes/mes_{data.value}.csv")
+    return df
+
+def filter_by_date(df, mask, start, end) -> pd.DataFrame:
     """Filter a DataFrame by start and end dates."""
     if start:
-        df = df[df["date"] >= start]
+        mask &= df["date"] >= pd.Timestamp(start)
     if end:
-        df = df[df["date"] <= end]
-    return df
+        mask &= df["date"] <= pd.Timestamp(end) + pd.Timedelta(days=1)
+    return mask, df
 
