@@ -1,6 +1,6 @@
 from app.tools import (
     tool_get_most_common_codes_API,
-    tool_get_date
+    tool_get_routings
     )
 from analytics.retrieve import retrieve
 from typing import Callable, Any
@@ -21,6 +21,14 @@ def get_most_common_codes(type: str, start_date: str, end_date: str, category: s
     result = tool_get_most_common_codes_API(type, start_date, end_date, category, n)
     return _r(result)
 
+def get_routings(type: str, part_family: str, n: int=3) -> dict[str, any]:
+    if not type:
+        return _missing("type")
+    if not part_family:
+        return _missing("part_family")
+    result = tool_get_routings(type, part_family, n)
+    return _r(result)
+
 def search_documents(query, k=5):
     """Search for documents related to the query using the retrieval system."""
     query = (str(query).strip() if query is not None else "")
@@ -28,13 +36,12 @@ def search_documents(query, k=5):
         return _missing("query")
     return _r(retrieve(query, k=k))
 
-def get_current_date():
-    """Get the current date in YYYY-MM-DD format."""
-    return _r({"current_date": tool_get_date()})
+
 
 DISPATCH: dict[str, Callable[..., dict[str, Any]]] = {
     "search_documents": search_documents,
     "get_most_common_codes_API": get_most_common_codes,
+    "get_routings": get_routings
 }
 
 def _tool(name: str, description: str, properties: dict[str, any], required: list[str]) -> dict[str, any]:
@@ -88,5 +95,24 @@ TOOL_SCHEMAS: list[dict[str, any]] = [
         },
         required=["type","category"],
     ),
+    _tool(
+        name="get_routings",
+        description="Get how part has been routed based on historical MES data",
+        properties={
+            "type":{
+                "type": "string",
+                "description": "Type of data fetching from mes must be 'operations' for this tool",
+            }, 
+            "part_family": {
+                "type":"string",
+                "description":"What type of part is looked out for. Some examples 'lifting_bracket', 'drive_shaft'"
+            }, 
+            "n":{
+                "type": "integer",
+                "description": "how many routes are retuned (default 3)"
+            }
+        },
+        required=["type", "part_family"]
+    )
 
 ]

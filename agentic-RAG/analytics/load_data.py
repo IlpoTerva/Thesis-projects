@@ -1,9 +1,6 @@
-
-
 from pathlib import Path
 import re
 import csv
-import pandas as pd
 
 DATA_DIR = Path("data")
 INSTRUCTIONS_DIR = DATA_DIR / "raw/sop_assembly"       # .md / .txt files
@@ -71,14 +68,3 @@ def load_fault_codes():
             ))
     return lookup, records
 
-MES_DIR = DATA_DIR / "mes" 
-
-def load_mes_data():
-    """Load MES data from a CSV file. Returns a list of records."""
-    path = MES_DIR / "mes_operations.csv"
-    return pd.read_csv(path) if path.exists() else pd.DataFrame()
-
-def load_mes_fault_data():
-    """Load MES fault data from a CSV file. Returns a list of records."""
-    path = MES_DIR / "mes_faults.csv"
-    return pd.read_csv(path) if path.exists() else pd.DataFrame()

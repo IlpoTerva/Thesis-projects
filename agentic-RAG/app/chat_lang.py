@@ -150,12 +150,12 @@ def tools_node(state: AgentState):
         (e["tool_name"], json.dumps(e["arguments"], sort_keys=True, default=str))
         for e in state["tool_calls_log"]
     }
-    print(f"[TOOL CALLS SEEN] -> {seen} \n")
+    #print(f"[TOOL CALLS SEEN] -> {seen} \n")
     has_analytics = any(tc["name"] in ANALYTICS_TOOLS for tc in last.tool_calls)
     new_messages: list[AnyMessage] = []
     log_adds: list[dict[str, Any]] = []
     src_adds: list[str] = [] #TODO add source (if retrieving where the answer is from)
-    print(f"[TOOL CALLS] -> {last.tool_calls} \n")
+    #print(f"[TOOL CALLS] -> {last.tool_calls} \n")
     for tc in last.tool_calls:
         name = tc["name"]
         args = tc.get("args") or {}
@@ -181,7 +181,7 @@ def tools_node(state: AgentState):
             ))
             continue
         dedupe_key = (name, json.dumps(args, sort_keys=True, default=str))
-        print(f"[TOOL CALL DEDUPE KEY] -> {dedupe_key} \n")
+        #print(f"[TOOL CALL DEDUPE KEY] -> {dedupe_key} \n")
         if dedupe_key in seen:
             print(f"[TOOL CALL SKIPPED] -> {name} with args: {args} \n")
             new_messages.append(
@@ -192,7 +192,7 @@ def tools_node(state: AgentState):
             )
             continue
         seen.add(dedupe_key)
-        print(f"[TOOL CALL SEEN UPDATED] -> {seen} \n")
+        #print(f"[TOOL CALL SEEN UPDATED] -> {seen} \n")
 
         try:
             print(f"[CALLING TOOL] -> {name} with args: {args} \n")

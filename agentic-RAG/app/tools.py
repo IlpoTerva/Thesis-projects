@@ -1,13 +1,11 @@
-from analytics.mes_analytics import (fault_code_lookup, 
-                                     most_common_codes, 
-                                     fault_code_summary, 
+from analytics.mes_analytics import (
                                      most_common_codes_API,
+                                     routings
                                     )
 import requests
 from app.config import settings
-from io import StringIO
-import datetime as dt
-from typing import Literal, Any
+#import datetime as dt
+from typing import Literal
 
 
 def tool_get_date():
@@ -47,7 +45,7 @@ def _fetch_mes_data(type: Literal["faults", "operations"], **filters) -> pd.Data
 def tool_get_most_common_codes_API(type: str, start_date: str, end_date: str, category: str, n: int = 10) -> dict:
     """Return the n most common codes from the specified category in the MES fault data."""
     try:
-        df = _fetch_mes_data(type, start=start_date, end=end_date)
+        df = _fetch_mes_data(type=type, start_date=start_date, end_date=end_date)
     except MESDataError as e:
         return {"error": str(e)}
     if df.empty:
@@ -58,8 +56,14 @@ def tool_get_most_common_codes_API(type: str, start_date: str, end_date: str, ca
             "results": most_common_codes_API(df, category, n)
         }
 
-
-
+def tool_get_routings(type: str, part_family: str, n: int = 3) -> dict[str, any]:
+    try:
+        df = _fetch_mes_data(type=type, part_family=part_family)
+    except MESDataError as e:
+        return {"error": str(e)}
+    if df.empty:
+        return{"part_family": part_family, "n_jobs": 0, "routes": []}
+    return routings(df, part_family, n)
 
 
 
