@@ -2,6 +2,6 @@
 .env
 __pycache__/
 .pyc
-chroma_store/
-*.sqlite3
-*.bin
+**/chroma_store/
+
+
