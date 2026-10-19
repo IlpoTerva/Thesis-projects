@@ -12,13 +12,13 @@ def _missing(param: str):
     return _r({"message": f"Missing required parameter: {param}"})
 
 
-def get_most_common_codes(type: str, start_date: str, end_date: str, category: str, n: int = 10) -> dict[str, any]:
+def get_most_common_codes(type: str, start_date: str, end_date: str, category: list[str]|str, metric:str, n: int = 10) -> dict[str, any]:
     """Get the most common fault codes from the MES fault data."""
     if not type:
         return _missing("type")
     if not category:
         return _missing("category")
-    result = tool_get_most_common_codes_API(type, start_date, end_date, category, n)
+    result = tool_get_most_common_codes_API(type, start_date, end_date, category, metric, n)
     return _r(result)
 
 def get_routings(type: str, part_family: str, n: int=3) -> dict[str, any]:
@@ -87,9 +87,13 @@ TOOL_SCHEMAS: list[dict[str, any]] = [
                 "description": "The end date for the data range (YYYY-MM-DD)."
             },
             "category": {
-                "type": "string",
-                "description": "Which field to count by (a column name, NOT a fault category value). One of: fault_code, fault_category, work_center_key, work_center_type, shift, part_key.",
+                "type": "list of strings | string ",
+                "description": "Which field to count by (a column name, NOT a fault category value). One of: fault_code, fault_category, work_center_key, work_center_type, shift, part_key: Example format -> ['work_center_key', 'part_key']; ['fault_code'] or 'fault_code' ",
                 },
+            "metric": {
+                "type": "string",
+                "description": "Metric for sorting. Either 'count' or 'duration' (default 'count'). If user wants amount use count "
+            },
             "n": {"type": "integer", "description": "Number of top values to return (default 10)."},
             
         },

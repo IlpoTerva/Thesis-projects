@@ -42,7 +42,7 @@ def _fetch_mes_data(type: Literal["faults", "operations"], **filters) -> pd.Data
         raise MESDataError(f"MES API request failed: {e}") from e
     return pd.DataFrame(resp.json()["data"])
 
-def tool_get_most_common_codes_API(type: str, start_date: str, end_date: str, category: str, n: int = 10) -> dict:
+def tool_get_most_common_codes_API(type: str, start_date: str, end_date: str, category: list[str]|str, metric: str, n: int = 10) -> dict:
     """Return the n most common codes from the specified category in the MES fault data."""
     try:
         df = _fetch_mes_data(type=type, start_date=start_date, end_date=end_date)
@@ -50,13 +50,10 @@ def tool_get_most_common_codes_API(type: str, start_date: str, end_date: str, ca
         return {"error": str(e)}
     if df.empty:
         return {"n_records": 0, "period": [start_date, end_date], "results": []}
-    return {
-            "n_records": len(df),
-            "period": [start_date, end_date],
-            "results": most_common_codes_API(df, category, n)
-        }
+    return most_common_codes_API(df, group_by=category, metric=metric, n=n)
 
 def tool_get_routings(type: str, part_family: str, n: int = 3) -> dict[str, any]:
+    """Return possible routings for new product based on part_family """
     try:
         df = _fetch_mes_data(type=type, part_family=part_family)
     except MESDataError as e:

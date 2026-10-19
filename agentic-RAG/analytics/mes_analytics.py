@@ -1,30 +1,29 @@
 
 from analytics.load_data import normalize_code
 import pandas as pd
+import json
 
-def most_common_codes_API(df: pd.DataFrame, category: str, n: int = 10):
+def most_common_codes_API(df: pd.DataFrame, group_by: list[str]|str, metric: str="count", n: int = 10):
     """Return the n most common values for a given field (column) in the MES fault data,
     i.e most common machines that have fault codes, operations that have fault codes, etc.
     Returns a dict of {value: count}, or {"error": ...} if `category` is not a valid field.
     """
-    
-    return df[category].value_counts().head(n).to_dict()
+    if isinstance(group_by, str):
+        group_by = [group_by]
 
+    agg = (df.groupby(group_by, dropna=False).agg(faults=("fault_code", "size"), downtime_min=("duration_minutes", "sum")).reset_index())
 
-def fault_code_summary_API(df:pd.DataFrame,code: str) -> dict:
-    """Return a summary of a fault code from the MES fault data."""    
-    code_norm = normalize_code(code)
-    code_df = df[df["fault_code"].apply(normalize_code) == code_norm]
-    if code_df.empty:
-        return {}
+    sort_col = "faults" if metric == "count" else "downtime_min"
+    agg["downtime_min"] = agg["downtime_min"].round(1)
+    agg = agg.sort_values(sort_col, ascending=False).head(n)
+
     return {
-        "code": code,
-        "count": len(code_df),
-        "first_occurrence": code_df["date"].min(),
-        "last_occurrence": code_df["date"].max(),
-        "details": code_df.to_dict(orient="records"),
+        "metric": metric,
+        "group_by": group_by,
+        "total_faults": int(len(df)),
+        "total_downtime_min": round(float(df["duration_minutes"].sum()), 1),
+        "results": json.loads(agg.to_json(orient="records"))
     }
-
 
 
 def routings(df: pd.DataFrame, part_family: str, n: int=3) -> dict[list]:
