@@ -2,7 +2,7 @@
 import chromadb
 from sentence_transformers import SentenceTransformer
 from app.config import settings
-from analytics.load_data import CODE_PATTERN, load_fault_codes
+#from analytics.load_data import CODE_PATTERN, load_fault_codes
 import re
 
 
@@ -33,23 +33,15 @@ def get_collection():
 
 def retrieve(query, k=5):
     col = get_collection()
-    code_lookup, _ = load_fault_codes()
-    codes = [normalize_code(c) for c in CODE_PATTERN.findall(query)]
+
     ctx = {"exact_codes": [], "code_logs": [], "semantic": []}
     q_emb = embed([query], is_query=True)
 
-    # 1. exact fault-code definitions (no embeddings — it's a lookup)
-    for c in codes:
-        if c in code_lookup:
-            ctx["exact_codes"].append(code_lookup[c])
-
-    # 2. "has this happened before?" — history filtered to this exact code
-    if codes:
-        res = col.query(
-            query_embeddings=q_emb, n_results=k,
-            where={"$and": [{"source_type": "log"}, {"code_norm": {"$in": codes}}]},
-        )
-        ctx["code_logs"] = res["documents"][0]
+    res = col.query(
+        query_embeddings=q_emb, n_results=k,
+        where={"$and": [{"source_type": "log"}]},
+    )
+    ctx["code_logs"] = res["documents"][0]
 
     # 3. general semantic pass — instructions + any similar cases
     res = col.query(query_embeddings=q_emb, n_results=k)

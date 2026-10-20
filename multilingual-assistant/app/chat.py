@@ -1,11 +1,10 @@
 from __future__ import annotations
 from typing import Any, Annotated, TypedDict
-import json
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
-from tools import TOOL_SCHEMAS, DISPATCH
-from voice_assistant import Speaker, Listener
-from config import settings
+from app.tools import DISPATCH
+from app.voice_assistant import Speaker, Listener
+from app.config import settings
 
 SYSTEM_PROMPT = """
 You are a helpful assistant for shopfloor operators. Answer the questions in the language of the query.
@@ -26,21 +25,15 @@ def _make_llm(with_tools:bool)-> Any:
         temperature=0,
     )
 
-    llm_fallback = ChatOpenAI(
-        base_url=settings.OLLAMA_BASE_URL,
-        api_key="ollama",
-        model_name=settings.OLLAMA_MODEL_FALLBACK,
-        temperature=0,
-    )
-
-    """if with_tools:
-        llm = llm.bind_tools(TOOL_SCHEMAS)
-        llm_fallback = llm_fallback.bind_tools(TOOL_SCHEMAS)"""
-    return llm.with_fallbacks([llm_fallback])
+    if with_tools:
+        llm = llm.bind_tools()
+    return llm
 
 
 
 LLM = _make_llm(with_tools=False)
+
+
 
 
 def chat(query: str, history: list[dict[str, str]] = None) -> dict[str, Any]:

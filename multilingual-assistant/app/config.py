@@ -33,9 +33,15 @@ class Settings:
     MAX_TOOL_ITERS = int(os.getenv("MAX_TOOL_ITERS", "6"))
 
     # ---- Data API ----
-    DATA_ENDPOINT = os.getenv("DATA_ENDPOINT", "http://localhost:8000")
-    # ---- Frontend ----
-    FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")
-
+    #DATA_ENDPOINT = os.getenv("DATA_ENDPOINT", "http://localhost:8000")
+    VOICE_DIR = {
+        "en": _resolve_path(os.getenv("EN_DIR", "voices/en/john/medium")),
+        "fi": _resolve_path(os.getenv("FI_DIR", "voices/fi/harri/medium"))
+        }
+    VOICE_FILE = {
+        "en": os.getenv("EN_FILES", "en_US-john-medium"),
+        "fi": os.getenv("FI_FILES", "fi_FI-harri-medium")
+        }
+    
 
 settings = Settings()

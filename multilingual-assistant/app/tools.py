@@ -1,5 +1,7 @@
-from retrieve import retrieve
+from app.retrieve import retrieve
 from typing import Callable, Any
+from langchain.tools import tool
+
 
 def _r(result: dict[str, any]):
     return {"result": result}
@@ -7,6 +9,8 @@ def _r(result: dict[str, any]):
 def _missing(param: str):
     return _r({"message": f"Missing required parameter: {param}"})
 
+
+@tool
 def tool_retrieve(query, k=5):
     """
     Tool function to retrieve relevant information based on a query.
@@ -17,34 +21,16 @@ def tool_retrieve(query, k=5):
         return _missing("query")
     return _r(retrieve(query, k=k))
 
+@tool
+def diagnostic_troubleshoot_tool(symptom: str):
+    """
+    Use this tool ONLY when a machine fails, throws an error/alarm code,
+    makes strange noises, or breaks down mechanically.
+    """
+    ...
+
 DISPATCH: dict[str, Callable[..., dict[str, Any]]] = {
     "retrieve": tool_retrieve,
 }
 
 
-def _tool(name: str, description: str, properties: dict[str, any], required: list[str]) -> dict[str, any]:
-    """
-    Helper function to create a tool schema.
-    """
-    return {
-        "name": name,
-        "description": description,
-        "parameters": {
-            "type": "object",
-            "properties": properties,
-            "required": required,
-        },
-    }
-
-
-TOOL_SCHEMAS: list[dict[str, any]] = [
-    _tool(
-        name="retrieve",
-        description="Retrieve relevant information based on a query.",
-        properties={
-            "query": {"type": "string", "description": "The query to retrieve information for."},
-            "k": {"type": "integer", "description": "The number of results to retrieve (default is 5)."},
-        },
-        required=["query"],
-    ),
-]
