@@ -31,7 +31,7 @@ def routings(df: pd.DataFrame, part_family: str, n: int=3) -> dict[list]:
 
     jobs = df.groupby("job_id").agg(
         route=("work_center_key", tuple),
-        part_key=("part_key", "first"),
+        part_family=("part_family", "first"),
         batch_qty=("batch_qty","first"),
     )
 
@@ -42,6 +42,6 @@ def routings(df: pd.DataFrame, part_family: str, n: int=3) -> dict[list]:
                        "n_jobs": len(g)})
     routes.sort(key=lambda r: r["n_jobs"], reverse=True)
 
-    return {"part_famliy": part_family, "n_jobs": total,
-            "n_distinct_routes": len(routes), "routes": route[:n]}
+    return {"part_family": part_family, "n_jobs": total,
+            "n_distinct_routes": len(routes), "routes": routes[:n]}
 

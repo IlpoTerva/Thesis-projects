@@ -24,7 +24,7 @@ def get_mes_data(data: Datatype,
     if start_date and end_date:
         mask, df = filter_by_date(df, mask, start_date, end_date)
     
-    filters = {"job_id": job_id, "part_key": part_family, "work_center_key": work_center_key}
+    filters = {"job_id": job_id, "part_family": part_family, "work_center_key": work_center_key}
     for name, value in filters.items():
         if value is None:
             continue

@@ -76,7 +76,7 @@ TOOL_SCHEMAS: list[dict[str, any]] = [
         properties={
             "type":{
                 "type":"string",
-                "description": "Type of data fetching from mes can be either 'faults' or 'operations'."
+                "description": "Type of data fetching from mes. One of 'faults' or 'operations'."
             },
             "start_date": {
                 "type": "string",
@@ -109,7 +109,7 @@ TOOL_SCHEMAS: list[dict[str, any]] = [
             }, 
             "part_family": {
                 "type":"string",
-                "description":"What type of part is looked out for. Some examples 'lifting_bracket', 'drive_shaft'"
+                "description":"What type of part is looked out for. Some examples 'Turned', 'Weldment', 'SheetMetal' "
             }, 
             "n":{
                 "type": "integer",

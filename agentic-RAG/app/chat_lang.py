@@ -20,6 +20,7 @@ from app.config import settings
 ANALYTICS_TOOLS = {
     "get_most_common_codes_API",
     "get_fault_code_summary_API",
+    "get_routings"
 }
 RETRIEVAL_TOOLS = {
     "search_documents",
@@ -81,16 +82,8 @@ def _make_llm(with_tools:bool)-> Any:
         temperature=0,
     )
 
-    """llm_fallback = ChatOpenAI(
-        base_url=settings.OLLAMA_BASE_URL,
-        api_key="ollama",
-        model_name=settings.OLLAMA_MODEL_FALLBACK,
-        temperature=0,
-    )"""
-
     if with_tools:
         llm = llm.bind_tools(TOOL_SCHEMAS)
-        #llm_fallback = llm_fallback.bind_tools(TOOL_SCHEMAS)
     return llm
 
 LLM_TOOLS = _make_llm(with_tools=True)
@@ -136,7 +129,6 @@ class AgentState(TypedDict):
 
 def agent_node(state: AgentState) -> dict[str, Any]:
     resp = LLM_TOOLS.invoke(state["messages"])
-    #print(f"[LLM RESPONSE] -> {resp} \n")
     update: dict[str, Any] = {"messages": [resp], "steps": state["steps"]+1}
     if not resp.tool_calls:
         update["answer"] = (resp.content or "").strip()
@@ -145,17 +137,15 @@ def agent_node(state: AgentState) -> dict[str, Any]:
 def tools_node(state: AgentState):
 
     last = state["messages"][-1]
-    print(f"[TOOL CALLS LOG] -> {state['tool_calls_log']} \n")
+    print(f"[TOOL CALLS LOG] -> {state['tool_calls_log']} \n") #Debuggins print
     seen = { 
         (e["tool_name"], json.dumps(e["arguments"], sort_keys=True, default=str))
         for e in state["tool_calls_log"]
     }
-    #print(f"[TOOL CALLS SEEN] -> {seen} \n")
     has_analytics = any(tc["name"] in ANALYTICS_TOOLS for tc in last.tool_calls)
     new_messages: list[AnyMessage] = []
     log_adds: list[dict[str, Any]] = []
-    src_adds: list[str] = [] #TODO add source (if retrieving where the answer is from)
-    #print(f"[TOOL CALLS] -> {last.tool_calls} \n")
+    #src_adds: list[str] = [] #TODO add source (if retrieving where the answer is from)
     for tc in last.tool_calls:
         name = tc["name"]
         args = tc.get("args") or {}
@@ -181,9 +171,7 @@ def tools_node(state: AgentState):
             ))
             continue
         dedupe_key = (name, json.dumps(args, sort_keys=True, default=str))
-        #print(f"[TOOL CALL DEDUPE KEY] -> {dedupe_key} \n")
         if dedupe_key in seen:
-            print(f"[TOOL CALL SKIPPED] -> {name} with args: {args} \n")
             new_messages.append(
                 ToolMessage(
                     content="This exact call was already made. Use the previous result and write final answer",
@@ -192,10 +180,9 @@ def tools_node(state: AgentState):
             )
             continue
         seen.add(dedupe_key)
-        #print(f"[TOOL CALL SEEN UPDATED] -> {seen} \n")
 
         try:
-            print(f"[CALLING TOOL] -> {name} with args: {args} \n")
+            print(f"[CALLING TOOL] -> {name} with args: {args} \n") #Debuggins print
             out = DISPATCH[name](**args)
             result = out.get("result", {})
         except Exception as exc:
@@ -256,7 +243,6 @@ def _build_graph()-> Any:
     g.add_node("force_final", force_final_node)
     g.add_node("finalize", finalize_node)
     g.add_edge(START, "agent")
-
     g.add_conditional_edges(
         "agent",
         _route_after_agent,

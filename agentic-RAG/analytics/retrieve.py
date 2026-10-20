@@ -38,12 +38,10 @@ def retrieve(query, k=5):
     ctx = {"exact_codes": [], "code_logs": [], "semantic": []}
     q_emb = embed([query], is_query=True)
 
-    # 1. exact fault-code definitions (no embeddings — it's a lookup)
     for c in codes:
         if c in code_lookup:
             ctx["exact_codes"].append(code_lookup[c])
 
-    # 2. "has this happened before?" — history filtered to this exact code
     if codes:
         res = col.query(
             query_embeddings=q_emb, n_results=k,
@@ -51,7 +49,6 @@ def retrieve(query, k=5):
         )
         ctx["code_logs"] = res["documents"][0]
 
-    # 3. general semantic pass — instructions + any similar cases
     res = col.query(query_embeddings=q_emb, n_results=k)
     ctx["semantic"] = res["documents"][0]
     return ctx
