@@ -1,4 +1,4 @@
-from pipelines.build_vector_index import build_index
+from pipelines.build_vector_index import build
 from app.retrieve import embed
 from app.chat import chat
 
@@ -6,12 +6,11 @@ from app.chat import chat
 def main():
     import sys
     if "--build" in sys.argv:
-        
-        build_index() #building vector database
+        build() #building vector database
     else:
         history = []
         print("Loading vector index and embedding model...")
-        embed(["test"])  # warm up the model
+        embed(["test"])  # load up the embedding model
 
         print("Operator assistant ready. Ask a question (Ctrl-C to quit).")
         while True:
