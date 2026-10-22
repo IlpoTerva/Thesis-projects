@@ -25,10 +25,15 @@ class Settings:
     EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "intfloat/multilingual-e5-base")
     VECTOR_STORE_DIR = _resolve_path(os.getenv("VECTOR_STORE_DIR", "data/chroma_store"))
     # Chroma requires a 3–512 char collection name ([a-zA-Z0-9._-]).
-    VECTOR_COLLECTION = os.getenv("VECTOR_COLLECTION", "manufacturing")
+    MANUALS_COLLECTION = os.getenv("MANUALS_COLLECTION","manuals") 
+    TROUBLE_COLLECTION = os.getenv("TROUBLE_COLLECTION","troubleshoot") 
     RAG_TOP_K = int(os.getenv("RAG_TOP_K", "5"))
     RAG_SCORE_FLOOR = float(os.getenv("RAG_SCORE_FLOOR", "0.75"))
+    CASES_JSON = os.getenv("TROUBLESHOOT_CASES_JSON", "data/cases.json")
 
+
+    TS_MARGIN = os.getenv("TS_MARGIN", "0.05")
+    TS_OPTIONS_MAX = os.getenv("TS_MAX_OPTIONS", "4")
     # ---- Agent loop ----
     MAX_TOOL_ITERS = int(os.getenv("MAX_TOOL_ITERS", "6"))
 
