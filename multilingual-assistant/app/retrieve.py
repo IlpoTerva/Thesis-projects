@@ -98,7 +98,7 @@ def _load_cases(path: str):
 CASES, ALARMS = _load_cases(settings.CASES_JSON)
 def retrieve_case(query, exclude):
     top_k = settings.RAG_TOP_K
-    exclude = exclude or set
+    exclude = exclude or set()
     base = {"query": query, "candidates": []}
 
     codes = {_normalize_code(c) for c in ALARM_RE.findall(query)}
@@ -132,6 +132,6 @@ def retrieve_case(query, exclude):
         return {**base, "match":"none"}
     
     top = scored[0][1]
-    close = [{**CASES[cid], "score": s} for cid, s in  scored if s >= top - settings.TS_MARGIN]
-    return {**base, "match": "symptom", "candidates": close[:settings.TS_OPTIONS_MAX]}
+    close = [{**CASES[cid], "score": s} for cid, s in  scored if s >= top - float(settings.TS_MARGIN)]
+    return {**base, "match": "symptom", "candidates": close[:int(settings.TS_OPTIONS_MAX)]}
 

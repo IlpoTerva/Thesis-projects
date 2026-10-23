@@ -47,6 +47,7 @@ class Settings:
         "en": os.getenv("EN_FILES", "en_US-john-medium"),
         "fi": os.getenv("FI_FILES", "fi_FI-harri-medium")
         }
+    SUPPORTED_LANGUAGES = [""]
     
 
 settings = Settings()

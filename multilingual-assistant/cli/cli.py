@@ -33,7 +33,7 @@ def main():
             #reply, messages = agent_answer(q, history=history) #ollama chat
             reply = generate_chat_response(message=q, session_id=session_id) #langgraph version
             if debug:
-                print(f"[DEBUG] {reply['tool_calls']}")
+                print(f"[DEBUG] {reply['tool_calls']}") 
             print("\n--- ANSWER ---")
             ans = reply["answer"]
             print(f"\n{ans}\n")
