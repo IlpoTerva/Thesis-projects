@@ -35,6 +35,7 @@ def main():
             if debug:
                 print(f"[DEBUG] {reply['tool_calls']}") 
             print("\n--- ANSWER ---")
+            print(f"[DEBUG ANSWER] {reply}")
             ans = reply["answer"]
             print(f"\n{ans}\n")
 

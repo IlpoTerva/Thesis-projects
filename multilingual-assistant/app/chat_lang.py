@@ -62,7 +62,7 @@ _MAX_TOOL_RESULT_CHARS = 4000
 
 def _build_question(candidates: list[dict]) -> tuple[str, list[str]]:
     options = [c["symptom"] for c in candidates] + ["None of these"]
-    return "Which of these best describes the situation?", options
+    return ("Which of these best describes the situation?", options)
     
 def _resolve_reply(reply: str, options: list[str]) -> int | None:
     m = re.fullmatch(r"\s*(\d+)\s*\.?\s*", reply)
@@ -173,7 +173,7 @@ def _rule_based_route(text: str) -> str:
 def classify_node(state: AgentState):
     text = state["messages"][-1].content.lower()
     route = _rule_based_route(text) #NOTE adding possibly text classifier for unclear cases 
-    print(f"[ROUTE DEBUG]: Routing -> {route}")
+    #print(f"[ROUTE DEBUG]: Routing -> {route}")
     return {"route": route}
 
 def manuals_node(state: AgentState):
@@ -239,7 +239,7 @@ def _route_after_classify(state: AgentState) -> str:
 
 
 def _route_after_troubleshoot(state: AgentState):
-    print(f"[TROUBLESHOOT ROTE DEBUG] Candidates: {state['candidates']}")
+    #print(f"[TROUBLESHOOT ROTE DEBUG] Candidates: {state['candidates']}")
     if len(state["candidates"]) > 1 and state["steps"] < settings.MAX_TOOL_ITERS:
         return "clarify"
     return "answer"
