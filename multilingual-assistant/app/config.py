@@ -27,6 +27,9 @@ class Settings:
     # Chroma requires a 3–512 char collection name ([a-zA-Z0-9._-]).
     MANUALS_COLLECTION = os.getenv("MANUALS_COLLECTION","manuals") 
     TROUBLE_COLLECTION = os.getenv("TROUBLE_COLLECTION","troubleshoot") 
+
+    MANUAL_IMAGES = _resolve_path(os.getenv("MANUAL_IMAGES", "data/raw/manual/figures"))
+
     RAG_TOP_K = int(os.getenv("RAG_TOP_K", "5"))
     RAG_SCORE_FLOOR = float(os.getenv("RAG_SCORE_FLOOR", "0.75"))
     CASES_JSON = os.getenv("TROUBLESHOOT_CASES_JSON", "data/cases.json")

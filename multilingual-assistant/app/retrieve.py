@@ -4,7 +4,7 @@ from typing import Any
 import re
 import json
 from pathlib import Path
-
+from pipelines.link_figures import figure_retrieval
 
 _collections = {}
 _model = None
@@ -63,7 +63,7 @@ def retrieve(query):
     documents = (res.get("documents") or [[]])[0]
     metadatas = (res.get("metadatas") or [[]])[0]
     distances = (res.get("distances") or [[]])[0]
-
+    #related_figures = figure_retrieval(res)
     chunks: list[dict[str, Any]] = []
     for doc, md, dist in zip(documents, metadatas, distances):
         md = md or {}
@@ -76,6 +76,7 @@ def retrieve(query):
                 "score": round(1.0 - float(dist), 4),
             })
     sources = sorted({c["source"] for c in chunks if c.get("source")})
+    
     return {"query": query, "chunks": chunks, "sources": sources}
 
 # ---- TROUBLESHOOT ALARMS; FAULTS -----
