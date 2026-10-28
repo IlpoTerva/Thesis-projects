@@ -13,6 +13,15 @@ CODE_PATTERN = re.compile(r"\b([A-Z]{1,4}[-_ ]?\d{2,6})\b")
 def normalize_code(s: str) -> str:
     return re.sub(r"[-_ ]", "", s.upper())
 
+def split_markdown(text):
+    if re.search(r"(?m)^#{1,6}\s", text):
+        chunks = re.split(f"\n(?=#{1,6}\s)", text)
+    else:
+        chunks = text.split("\n\n")
+    #drop heading only and empty chunks
+    return [c.strip() for c in chunks if c.strip() and "\n" in c.strip()]
+
+
 def _iter_files(path, exts=(".md", ".txt")):
     p = Path(path)
     if p.is_file():
@@ -25,11 +34,14 @@ def _iter_files(path, exts=(".md", ".txt")):
     print(f"[warn] no files found at {p.resolve()}")
     return []
 
+
+
 def load_instructions():
     records = []
     for fp in _iter_files(INSTRUCTIONS_DIR):
         text = fp.read_text(encoding="utf-8")
-        chunks = re.split(r"\n(?=#{1,6}\s)", text) if "#" in text else text.split("\n\n")
+        #chunks = re.split(r"\n(?=#{1,6}\s)", text) if "#" in text else text.split("\n\n")
+        chunks = split_markdown(text)
         for i, ch in enumerate(c.strip() for c in chunks):
             if ch:
                 records.append((f"instr::{fp.stem}::{i}", ch,
@@ -40,7 +52,8 @@ def load_fault_logs():
     records = []
     for fp in _iter_files(FAULT_LOGS_FILE):
         text = fp.read_text(encoding="utf-8")
-        chunks = re.split(r"\n(?=#{1,6}\s)", text) if "#" in text else text.split("\n\n")
+        #chunks = re.split(r"\n(?=#{1,6}\s)", text) if "#" in text else text.split("\n\n")
+        chunks = split_markdown(text)
         for i, ch in enumerate(c.strip() for c in chunks):
             if not ch:
                 continue
