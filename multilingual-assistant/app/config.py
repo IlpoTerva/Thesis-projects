@@ -40,8 +40,8 @@ class Settings:
     # ---- Agent loop ----
     MAX_TOOL_ITERS = int(os.getenv("MAX_TOOL_ITERS", "6"))
 
-    # ---- Data API ----
-    #DATA_ENDPOINT = os.getenv("DATA_ENDPOINT", "http://localhost:8000")
+    FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")
+    
     VOICE_DIR = {
         "en": _resolve_path(os.getenv("EN_DIR", "voices/en/john/medium")),
         "fi": _resolve_path(os.getenv("FI_DIR", "voices/fi/harri/medium"))

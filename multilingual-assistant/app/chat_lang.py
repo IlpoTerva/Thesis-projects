@@ -12,11 +12,14 @@ from langchain_openai import ChatOpenAI
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.types import Command, interrupt
+from langgraph.config import get_stream_writer
+
+
 from lingua import LanguageDetectorBuilder, Language
 
 from app.tools import tool_retrieve, tool_troubleshoot_lookup, TOOL_SCHEMAS
 from app.config import settings
-
+from app.schemas import ChatResponse
 
 
 SYSTEM_PROMPT = """
@@ -124,13 +127,12 @@ LANG_NAMES = {"en": "English", "fi": "Finnish"}
 def _detect_language(text: str, fallback: str):
     
     det = LANG_DETECTOR.detect_language_of(text=text)
-    print(f"[DETECTED] {det}")
     return det.iso_code_639_1.name.lower() if det else fallback
 
     
 
 def detect_lang_node(state: AgentState):
-    print(f"[DETECT LANG NODE] lang: {_detect_language(state['user_message'], fallback=state.get('lang', 'en'))} ")
+    get_stream_writer()({"stage": "language", "label": "Detecting language"})
     return {"lang": _detect_language(state["user_message"], fallback=state.get("lang", "en"))}
 
 _PROTECT_RE = re.compile(
@@ -139,7 +141,6 @@ _PROTECT_RE = re.compile(
 
 def _translate(text: str, target: str) -> str:
     if not text.strip() or target == "en" and _detect_language(text=text, fallback="en") == "en":
-        print(f"[TRANSLATE] No translate needed")
         return text
     msgs = [
         SystemMessage(content=TRANSLATE_PROMPT.format(target=LANG_NAMES.get(target, target))),
@@ -151,19 +152,17 @@ def _translate(text: str, target: str) -> str:
         out = re.sub(r"<text>\s*|\s*<\text>$", "", out)
         if out and must_keep <= set(_PROTECT_RE.findall(out)):
             return out
-    print(f"[TRANSLATE] fallback to original, missing {must_keep - set(_PROTECT_RE.findall(out))}")
     return text
 
 def translate_in_node(state: AgentState):
-    print(f"[TRANSLATE IN NODE]")
     return {"query": _translate(state["user_message"], "en")}
 
 def translate_out_node(state: AgentState):
-    print(f"[TRANSLATE OUT NODE]")
     return {"answer": _translate(state["answer"], state["lang"])}
 
 ALARM_RE = re.compile(r"\b(?:\d{4,6}|[AF]\d{2,5}\b)")
 TROUBLE_WORDS = ("error", "alarm", "fault", "vika", "hälytys", "virhe")
+
 def _rule_based_route(text: str) -> str:
     if ALARM_RE.search(text) or any(w in text for w in TROUBLE_WORDS):
         return "troubleshoot"
@@ -173,16 +172,19 @@ def _rule_based_route(text: str) -> str:
 def classify_node(state: AgentState):
     text = state["messages"][-1].content.lower()
     route = _rule_based_route(text) #NOTE adding possibly text classifier for unclear cases 
-    #print(f"[ROUTE DEBUG]: Routing -> {route}")
     return {"route": route}
 
 def manuals_node(state: AgentState):
+    get_stream_writer()({"stage": "manual", "label": "Searching manual"})
+    print(f"[MANUAL NODE] query: {state['user_message']}" )
     ret = tool_retrieve(state["user_message"])
     return {"context": ret["result"].get("chunks", [])}
     
 
 def troubleshoot_node(state: AgentState):
+    get_stream_writer()({"stage": "troubleshooting", "label": "Checking alarm causes"})
     query = state["query"] or state["user_message"]
+    print(f"[TROUBLESHOOT] query: {query}")
     out = tool_troubleshoot_lookup(query, exclude=state["excluded"])["result"]
     candidates = out.get("candidates", [])
     return {"query":query, "candidates": candidates, "context": candidates}
@@ -196,12 +198,11 @@ def clarify_node(state: AgentState):
     
     cands = state["candidates"]
     question, options = _build_question(candidates=cands)
-    print(f"[CLARIFY NODE] question: {question}, options: {options}")
+    print(f"[CLARIFY] question: {question}, options: {options}")
     reply = _translate(text=str(interrupt({"question": question, "options": options})), target=state["lang"])
     idx = _resolve_reply(reply=reply, options=options)
-
     update = {"steps": state["steps"]+1,
-              "messages": [AIMessage(content=question), HumanMessage(content=reply)] 
+              "messages": [AIMessage(content=question), HumanMessage(content=options[idx])] 
               }
     if idx is not None and idx < len(cands):
         update["candidates"] = cands[idx]
@@ -213,7 +214,8 @@ def clarify_node(state: AgentState):
 
 
 def answer_node(state: AgentState):
-    print(f"[ANSWE NODE] Context: {state['context']}")
+    
+    get_stream_writer()({"stage": "generate", "label": "Writing answer"})
     if not state["context"]:
         return {"answer": ""}
     resp = LLM_PLAIN.invoke([SystemMessage(SYSTEM_PROMPT),
@@ -222,6 +224,7 @@ def answer_node(state: AgentState):
                                           f"Answer the operator's question using only this context")
                              ])
     answer = (resp.content or "").strip()
+    print(f"[ANSWER NODE] answer: {answer}")
     return {"answer": answer, "message": [AIMessage(content=answer)]}
 
 
@@ -239,8 +242,7 @@ def _route_after_classify(state: AgentState) -> str:
 
 
 def _route_after_troubleshoot(state: AgentState):
-    #print(f"[TROUBLESHOOT ROTE DEBUG] Candidates: {state['candidates']}")
-    if len(state["candidates"]) > 1 and state["steps"] < settings.MAX_TOOL_ITERS:
+    if not state["resolved"] and len(state["candidates"]) > 1 and state["steps"] < settings.MAX_TOOL_ITERS:
         return "clarify"
     return "answer"
 
@@ -302,6 +304,7 @@ def _initial_state(message: str) -> dict[str, Any]:
         "user_message":message,
     }
 
+# generate answer for CLI
 def generate_chat_response(message: str, session_id: str) -> dict[str, Any]:
     cfg = {"configurable": {"thread_id": session_id}}
     if GRAPH.get_state(cfg).next:
@@ -313,3 +316,58 @@ def generate_chat_response(message: str, session_id: str) -> dict[str, Any]:
         return {"answer": payload["question"], "options": payload["options"], "awaiting_reply": True}
     
     return {"answer": result["answer"], "route": result["route"], "sources": result["context"]}
+
+
+"""
+Chatting with the web UI instead of the CLI
+"""
+
+def _answer_response(state: dict) -> ChatResponse:
+    return ChatResponse(
+        route=state["route"],
+        blocks=[{"type": "text", "text": state["answer"]}],#TODO add sources.
+    )
+
+def _choice_response(payload: dict, state: dict) -> ChatResponse:
+    options = []
+    for i, opt in enumerate(payload["options"], start=1):
+        if isinstance(opt, str):
+            opt = {"label": opt}
+        options.append({"id": str(i), "label": opt["label"], "detail": opt.get("detail", "")})
+
+    return ChatResponse(
+        route=state["route"],
+        blocks=[{"type":"choices", "prompt": payload["question"], "options": options}]
+    )
+
+
+def generate_chat_response_ui(message: str, session_id: str, choide_id: str | None = None) -> ChatResponse:
+    cfg = {"configurable": {"thread_id": session_id}}
+    if GRAPH.get_state(cfg).next:
+        result = GRAPH.invoke(Command(resume=choide_id or message), cfg)
+    else:
+        result = GRAPH.invoke(_initial_state(message=message), cfg)
+    if "__interrupt__" in result:
+        return _choice_response(result["__interrupt__"][0].value, result)    
+    return _answer_response(result)
+
+def stream_chat_response(message: str, session_id: str, choide_id: str | None = None):
+    cfg = {"configurable": {"thread_id": session_id}}
+    if GRAPH.get_state(cfg).next:
+        graph_input = Command(resume=choide_id or message)
+    else:
+        graph_input = _initial_state(message=message)
+
+    for chunk in GRAPH.stream(graph_input, cfg, stream_mode="custom"):
+        if "stage" in chunk:
+            yield {"type": "stage", **chunk}
+
+    snap = GRAPH.get_state(cfg)
+    interrupts = [i for task in snap.tasks for i in task.interrupts]
+    if interrupts:
+        resp = _choice_response(payload=interrupts[0].value, state=snap.values)
+    else:
+        resp = _answer_response(snap.values)
+
+    yield {"type": "result", "data": resp.model_dump()}
+    
