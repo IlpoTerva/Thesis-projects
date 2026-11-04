@@ -11,14 +11,13 @@ from langchain_openai import ChatOpenAI
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
 import operator
-#from app.agent_tools import TOOL_SCHEMAS, DISPATCH
-from app.agent_tools_api import TOOL_SCHEMAS, DISPATCH
+from app.tools import TOOL_SCHEMAS, TOOLS, dispatch
 from app.tools import tool_get_date
 from app.config import settings
 
 
 ANALYTICS_TOOLS = {
-    "get_most_common_codes_API",
+    "get_most_common_codes",
     "get_fault_code_summary_API",
     "get_routings"
 }
@@ -151,10 +150,10 @@ def tools_node(state: AgentState):
         args = tc.get("args") or {}
         tc_id = tc["id"]
 
-        if name not in DISPATCH:
+        if name not in TOOLS:
             new_messages.append(
                 ToolMessage(
-                    content=f"Unknown tool '{name}'. Available tools: {', '.join(DISPATCH)}",
+                    content=f"Unknown tool '{name}'. Available tools: {', '.join(TOOLS)}",
                     tool_call_id=tc_id,
                 )
             )
@@ -183,7 +182,9 @@ def tools_node(state: AgentState):
 
         try:
             print(f"[CALLING TOOL] -> {name} with args: {args} \n") #Debuggins print
-            out = DISPATCH[name](**args)
+            #out = DISPATCH[name](**args)
+            out = dispatch(name=name, args=args)
+            print(out)
             result = out.get("result", {})
         except Exception as exc:
             result = {"error": str(exc)}

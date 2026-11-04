@@ -8,8 +8,13 @@ def most_common_codes_API(df: pd.DataFrame, group_by: list[str]|str, metric: str
     i.e most common machines that have fault codes, operations that have fault codes, etc.
     Returns a dict of {value: count}, or {"error": ...} if `category` is not a valid field.
     """
+    
     if isinstance(group_by, str):
         group_by = [group_by]
+
+    invalid = [c for c in group_by if c not in df.columns]
+    if invalid:
+        return {"error": f"Unknown field(s): {invalid}"}
 
     agg = (df.groupby(group_by, dropna=False).agg(faults=("fault_code", "size"), downtime_min=("duration_minutes", "sum")).reset_index())
 

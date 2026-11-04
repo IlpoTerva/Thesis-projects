@@ -21,8 +21,8 @@ class Settings:
     # ---- Local LLM (Ollama, OpenAI-compatible endpoint) ----
     OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1") #http://localhost:11434/api/chat for ollama api
     #OLLAMA_MODEL = os.getenv("QWEN_MODEL", "qwen2.5:14b-instruct") 
-    #OLLAMA_MODEL = os.getenv("QWEN_MODEL_FALLBACK", "qwen2.5:14b-instruct") 
-    OLLAMA_MODEL = os.getenv("LLAMA_MODEL", "qwen2.5:14b-instruct") 
+    OLLAMA_MODEL = os.getenv("QWEN_MODEL_FALLBACK", "qwen2.5:7b-instruct") 
+    #OLLAMA_MODEL = os.getenv("LLAMA_MODEL", "qwen2.5:14b-instruct") 
 
     
     # ---- Embeddings + Vector store (all local) ----
