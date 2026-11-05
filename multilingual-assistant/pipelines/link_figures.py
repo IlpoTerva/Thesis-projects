@@ -21,7 +21,7 @@ def link_figures(docs, figures, section_key="section", page_key="page", page_off
     """
     by_section, by_page = {}, {}
     for f in figures:
-        heading = _norm(f["section"].split(" > ")[-1] if f["sectio"] else "")
+        heading = _norm(f["section"].split(" > ")[-1] if f["section"] else "")
         if heading:
             by_section.setdefault(heading, []).append(f["figure_id"])
         by_page.setdefault(f["page"], []).append(f"figure_id")

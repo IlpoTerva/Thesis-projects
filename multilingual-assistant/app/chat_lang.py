@@ -20,6 +20,10 @@ from lingua import LanguageDetectorBuilder, Language
 from app.tools import tool_retrieve, tool_troubleshoot_lookup, TOOL_SCHEMAS
 from app.config import settings
 from app.schemas import ChatResponse
+from pipelines.save_io import (in_content, 
+                               out_content, 
+                               save_content_in, 
+                               save_content_out)
 
 
 SYSTEM_PROMPT = """
@@ -39,26 +43,30 @@ Rules:
 - Copy these unchanged: alarm codes (025000, A08, F30001), machine data (MD30200, MD14510[20]),
   interfaces (X54, X102), PLC addresses (DB1000.DBX3.5), key and softkey names in capitals
   (RESET, CYCLE START, SHIFT + SYSTEM ALARM), and citation markers like [1].
+
+Known translations from Finnish to English:
+
+ kara, työkara - spindle
+
+
 """
 
 
-def _make_llm(with_tools:bool)-> Any:
+def _make_llm(temp: int=0)-> Any:
     """Create a LangChain LLM instance with or without tools."""
     llm = ChatOpenAI(
         base_url=settings.OLLAMA_BASE_URL,
         api_key="ollama",
         model_name=settings.OLLAMA_MODEL,
-        temperature=0,
+        temperature=temp,
     )
 
-    if with_tools:
-        llm = llm.bind_tools(TOOL_SCHEMAS)
     return llm
 
 
 #LLM_TOOLS = _make_llm(with_tools=True)
-LLM_PLAIN = _make_llm(with_tools=False)
-LLM_TRANSLATE = _make_llm(with_tools=False)
+LLM_PLAIN = _make_llm()
+LLM_TRANSLATE = _make_llm(temp=0.5)
 
 _MAX_TOOL_RESULT_CHARS = 4000
 
@@ -147,18 +155,25 @@ def _translate(text: str, target: str) -> str:
         HumanMessage(content=f"<text>\n{text}\n<text>")
     ]
     must_keep = set(_PROTECT_RE.findall(text))
+    out = ""
     for _ in range(2):
         out = (LLM_TRANSLATE.invoke(msgs).content or "").strip()
         out = re.sub(r"<text>\s*|\s*<\text>$", "", out)
         if out and must_keep <= set(_PROTECT_RE.findall(out)):
             return out
-    return text
+    return out
 
 def translate_in_node(state: AgentState):
-    return {"query": _translate(state["user_message"], "en")}
+    trans = _translate(state["user_message"], "en")
+    content = in_content(In=state["user_message"], Out=trans)
+    save_content_in(content)
+    return {"query": trans}
 
 def translate_out_node(state: AgentState):
-    return {"answer": _translate(state["answer"], state["lang"])}
+    trans = _translate(state["answer"], state["lang"])
+    content = out_content(In=state["answer"], Out=trans)
+    save_content_out(content)
+    return {"answer": trans}
 
 ALARM_RE = re.compile(r"\b(?:\d{4,6}|[AF]\d{2,5}\b)")
 TROUBLE_WORDS = ("error", "alarm", "fault", "vika", "hälytys", "virhe")
@@ -176,14 +191,15 @@ def classify_node(state: AgentState):
 
 def manuals_node(state: AgentState):
     get_stream_writer()({"stage": "manual", "label": "Searching manual"})
-    print(f"[MANUAL NODE] query: {state['user_message']}" )
-    ret = tool_retrieve(state["user_message"])
+    query = state["query"] if state["query"] != "" else state["user_message"]
+    print(f"[MANUAL NODE] query: {query}" )
+    ret = tool_retrieve(query)
     return {"context": ret["result"].get("chunks", [])}
     
 
 def troubleshoot_node(state: AgentState):
     get_stream_writer()({"stage": "troubleshooting", "label": "Checking alarm causes"})
-    query = state["query"] or state["user_message"]
+    query = state["query"] if state["query"] != "" else state["user_message"]
     print(f"[TROUBLESHOOT] query: {query}")
     out = tool_troubleshoot_lookup(query, exclude=state["excluded"])["result"]
     candidates = out.get("candidates", [])

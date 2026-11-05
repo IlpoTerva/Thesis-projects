@@ -14,6 +14,7 @@ def _resolve_path(value: str) -> str:
     return str(p if p.is_absolute() else (BASE_DIR / p))
 
 
+
 class Settings:
     # ---- Local LLM (Ollama, OpenAI-compatible endpoint) ----
     OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1") #http://localhost:11434/api/chat for ollama api
@@ -51,6 +52,9 @@ class Settings:
         "fi": os.getenv("FI_FILES", "fi_FI-harri-medium")
         }
     SUPPORTED_LANGUAGES = [""]
+
+    TRANSLATE_IN_FILE = _resolve_path("translate_in.json")
+    TRANSLATE_OUT_FILE = _resolve_path("translate_out.json")
     
 
 settings = Settings()

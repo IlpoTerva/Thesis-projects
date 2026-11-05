@@ -1,0 +1,37 @@
+[
+    {
+        "In": "miten aloittaa osa ohjelma",
+        "Out": "how to start the program section",
+        "Ground": ""
+    },
+    {
+        "In": "miten aloittaa osa-ohjelma",
+        "Out": "how to start a subprogram",
+        "Ground": ""
+    },
+    {
+        "In": "miten tehdä osa-ohjelma",
+        "Out": "how to create a subroutine",
+        "Ground": ""
+    },
+    {
+        "In": "miten tehdä osa ohjelma",
+        "Out": "how to do part of the program",
+        "Ground": ""
+    },
+    {
+        "In": "kara ei toimi",
+        "Out": "does not work",
+        "Ground": ""
+    },
+    {
+        "In": "kone herjaa 700016",
+        "Out": "machine jams 700016",
+        "Ground": ""
+    },
+    {
+        "In": "kara vika",
+        "Out": "spindle fault",
+        "Ground": ""
+    }
+]
