@@ -1,0 +1,7 @@
+langchain-openai
+langchain-core
+pydantic>=2
+python-dotenv
+lingua-language-detector
+sacrebleu
+scipy
