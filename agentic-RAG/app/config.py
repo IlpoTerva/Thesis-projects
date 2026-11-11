@@ -39,7 +39,6 @@ class Settings:
     # ---- Data API ----
     DATA_ENDPOINT = os.getenv("DATA_ENDPOINT", "http://localhost:8000")
     # ---- Frontend ----
-    FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")
 
 
 settings = Settings()

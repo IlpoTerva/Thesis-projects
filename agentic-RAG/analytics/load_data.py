@@ -8,14 +8,14 @@ FAULT_CODES_FILE = DATA_DIR / "processed/fault_code_master.csv"    # code, descr
 FAULT_LOGS_FILE  = DATA_DIR / "raw/fault_reference"     # date, machine, code, symptom, action_taken, resolution
 
 CODE_PATTERN = re.compile(r"\b([A-Z]{1,4}[-_ ]?\d{2,6})\b")
-
+HEADING_SPLIT = re.compile(r"\n(?=#{1,6}\s)")
 
 def normalize_code(s: str) -> str:
     return re.sub(r"[-_ ]", "", s.upper())
 
 def split_markdown(text):
     if re.search(r"(?m)^#{1,6}\s", text):
-        chunks = re.split(f"\n(?=#{1,6}\s)", text)
+        chunks = HEADING_SPLIT.split(text)
     else:
         chunks = text.split("\n\n")
     #drop heading only and empty chunks

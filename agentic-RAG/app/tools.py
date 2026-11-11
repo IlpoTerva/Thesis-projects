@@ -12,7 +12,7 @@ import inspect
 from typing import Callable, Any, get_type_hints
 from pydantic import BaseModel, ValidationError, create_model, Field
 
-def tool_get_date():
+def get_date():
     """Return the current date in YYYY-MM-DD format.
     Usage: Added to system promopt
     """
@@ -55,7 +55,10 @@ def dispatch(name: str, args: dict[str, Any]) -> dict[str, Any]:
     try: 
         validated = Args(**args)
     except ValidationError as e:
-        return {"result": {"error": f"Invalid arguments: {e}"}}
+        details = "; ".join(
+        f"{'.'.join(map(str, err['loc'])) or 'args'}: {err['msg']}" for err in e.errors())
+        return {"result": {"error": f"Invalid arguments: {details}. "
+                                 "Correct the arguments and call the tool again."}}
     return {"result": func(**validated.model_dump())}
 
 
