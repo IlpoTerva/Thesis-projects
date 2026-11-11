@@ -97,6 +97,8 @@ def _load_cases(path: str):
     return  cases, alarm_index
 
 CASES, ALARMS = _load_cases(settings.CASES_JSON)
+
+
 def retrieve_case(query, exclude):
     top_k = settings.RAG_TOP_K
     exclude = exclude or set()
@@ -105,6 +107,7 @@ def retrieve_case(query, exclude):
     codes = {_normalize_code(c) for c in ALARM_RE.findall(query)}
     hit_ids = [cid for c in codes for cid in ALARMS.get(c, []) if cid not in exclude]
     hit_ids = list(dict.fromkeys(hit_ids))
+    print(f"[HIT DEBUG] hit_ids: {hit_ids}")
     if hit_ids:
         return {
             **base, "match": "alarm_code", "codes": codes,

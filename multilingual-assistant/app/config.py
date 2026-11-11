@@ -37,7 +37,7 @@ class Settings:
 
 
     TS_MARGIN = os.getenv("TS_MARGIN", "0.05")
-    TS_OPTIONS_MAX = os.getenv("TS_MAX_OPTIONS", "4")
+    TS_OPTIONS_MAX = os.getenv("TS_MAX_OPTIONS", "10")
     # ---- Agent loop ----
     MAX_TOOL_ITERS = int(os.getenv("MAX_TOOL_ITERS", "6"))
 
@@ -55,6 +55,7 @@ class Settings:
 
     TRANSLATE_IN_FILE = _resolve_path("translate_in.json")
     TRANSLATE_OUT_FILE = _resolve_path("translate_out.json")
+    OPTIONS_FILE = _resolve_path("options.json")
     
 
 settings = Settings()
