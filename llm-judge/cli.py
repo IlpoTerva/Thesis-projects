@@ -84,7 +84,7 @@ def run_direction(direction: str, judge: Judge, input_path: str, limit: int | No
     current: list[ItemResult] = []
     with open(jsonl_path, "a", encoding="utf-8") as out:
         for i, it in enumerate(items):
-            source, output = it.get("In", ""), it.get("Out", "")
+            source, output = it.get("original", ""), it.get("translated", "")
             ground = it.get("Ground", "") if direction == "fi-en" else ""
             cached = cache.get(item_id(source, output, ground))
             if not force and _is_cached(cached, judge, module.PROMPT_VERSION):
