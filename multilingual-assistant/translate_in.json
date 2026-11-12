@@ -1,37 +1,94 @@
-[
-    {
-        "In": "miten aloittaa osa ohjelma",
-        "Out": "how to start the program section",
-        "Ground": ""
-    },
-    {
-        "In": "miten aloittaa osa-ohjelma",
-        "Out": "how to start a subprogram",
-        "Ground": ""
-    },
-    {
-        "In": "miten tehdä osa-ohjelma",
-        "Out": "how to create a subroutine",
-        "Ground": ""
-    },
-    {
-        "In": "miten tehdä osa ohjelma",
-        "Out": "how to do part of the program",
-        "Ground": ""
-    },
-    {
-        "In": "kara ei toimi",
-        "Out": "does not work",
-        "Ground": ""
-    },
-    {
-        "In": "kone herjaa 700016",
-        "Out": "machine jams 700016",
-        "Ground": ""
-    },
-    {
-        "In": "kara vika",
-        "Out": "spindle fault",
-        "Ground": ""
-    }
-]
+{
+    "qwen2.5:14b-instruct": [
+        {
+            "original": "Osaohjelman tekeminen",
+            "translated": "Creating a subprogram",
+            "Ground": ""
+        },
+        {
+            "original": "Onko AC ja DC mitoituksien välillä eroja",
+            "translated": "Is there a difference between AC and DC filtering?",
+            "Ground": ""
+        },
+        {
+            "original": "Miten PLC ja NC datasta voidaant ehdä varmuuskopiot",
+            "translated": "How to obtain backups of PLC and NC data",
+            "Ground": ""
+        },
+        {
+            "original": "Kuinka paljon käsipyörä liikkuu, kun lisäykseksi on asetettu 10",
+            "translated": "How much does the hand wheel move when an increment of 10 is set?",
+            "Ground": ""
+        },
+        {
+            "original": "Miten varmistaa työkalukorjausten oikeellisuus ennen ohjelman ajamista",
+            "translated": "How to ensure the correctness of tool compensation before running the program",
+            "Ground": ""
+        },
+        {
+            "original": "Kuinka akselit referoidaan, kun kone on kytketty päälle",
+            "translated": "How do you reference the axes when the machine is turned on?",
+            "Ground": ""
+        },
+        {
+            "original": "Unohdin salasanani, menetkänkö kaikki tiedot, jos alustan koneen uudelleen",
+            "translated": "I forgot my password, will all the data be lost if I reset the machine?",
+            "Ground": ""
+        },
+        {
+            "original": "positiivinen vai negatiivinen arvo kulumakorjaukseen, jos halkaisija jää liian isoksi",
+            "translated": "positive or negative value for the compensation, if the drill size becomes too large",
+            "Ground": ""
+        },
+        {
+            "original": "miten laskea kierteen nousun muutos",
+            "translated": "how to calculate the change in slope of a circuit",
+            "Ground": ""
+        },
+        {
+            "original": "kuinka monta työkalua voidaan maksimissaan tehdä",
+            "translated": "how many tools can be made at most",
+            "Ground": ""
+        },
+        {
+            "original": "Referenssi lähestymispiste ongelma",
+            "translated": "Reference approach point problem",
+            "Ground": ""
+        },
+        {
+            "original": "Karan nopeus ei ole stabiili, mitä sille voi tehdä",
+            "translated": "The carriage speed is not stable; what can be done about it?",
+            "Ground": ""
+        },
+        {
+            "original": "kara ongelma, Karan nopeus ei ole stabiili, mitä sille voi tehdä",
+            "translated": "There is a problem, the Karan speed is not stable, what can be done about it?",
+            "Ground": ""
+        },
+        {
+            "original": "Ongelma, Akseli ei liiku mutta näytöllä akselin paikka muuttuu",
+            "translated": "Problem: Akseli does not move, but the position of the axel changes on the display",
+            "Ground": ""
+        },
+        {
+            "original": "Mitä tarkoittaa hälytys 700017",
+            "translated": "What does alarm 700017 mean?",
+            "Ground": ""
+        },
+        {
+            "original": "Revolveri ei löydä paikkaa ja näyttää hälytystä 700025",
+            "translated": "The revolver cannot be found and an alarm 700025 is displayed",
+            "Ground": ""
+        },
+        {
+            "original": "Miten varoituksen 8064 saa pois",
+            "translated": "How to clear warning 8064",
+            "Ground": ""
+        },
+        {
+            "original": "Kone herjaa hälytystä 700013 mikä homma",
+            "translated": "The machine is alarming with code 700013, what's the issue?",
+            "Ground": ""
+        }
+    ]
+}

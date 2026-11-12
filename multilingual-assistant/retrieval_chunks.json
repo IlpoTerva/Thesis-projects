@@ -1,0 +1,113 @@
+{
+    "how many tools can be made at most": [
+        {
+            "text": "116 6FC5398-5DP10-0BA5, 06/2017 11.11 Tool and tool offset 11.11.1 General information (turning) Functionality During program creation for the workpiece machining, you do not have to take tool lengths or cutting radius into consideration. You program the workpiece dimensions directly, e.g. according to the drawing. The tool data must be entered separately in a special data area. In the program, you will merely call the required tool with its offset data. The control system performs the required path compensations based on the data to create the described workpiece. See the following illustration for machining a workpiece with different tool dimensions: 11.11.2 Tool T (turning) Functionality The tool selection takes place when the T word is programmed. Whether this is a tool change or only a preselection is defined in the machine data: ● A tool change (tool call) takes place directly with the T word (e.g. typical for tool turrets on turning machines) or ● The change takes place after the preselection with the T word by an additional instruction M6. Note: If a certain tool was activated, it remains stored as an active tool even beyond the end of the program and after switching off/switching on the control system. If you change a tool manually, input the change also in the control system so that the control system 'knows' the correct tool. For example, you can start a block with the new T word in MDA mode. Programming example Tool change without M6 N10 T1 N20 T3 N30 T2 N40 T6 N50 T7 N60 T5 N70 T588 N80 M30 The control system can store a maximum of 64 tools.",
+            "source": "SNUMERIK-808D_manual.pdf",
+            "page": 116,
+            "sheet": "",
+            "score": 0.8199
+        },
+        {
+            "text": "192 6FC5398-5DP10-0BA5, 06/2017 See the following illustration for the example of infeed depth: Machining section 1 has a total depth of 39 mm. If the maximum infeed depth is 5 mm, eight roughing cuts are required. These are carried out with an infeed of 4.875 mm. In machining step 2, 8 roughing steps, too, are carried out with an infeed of 4.5 mm each (total difference 36 mm). In machining step 3, two roughing passes are carried out with a current infeed of 3.5 (total difference 7 mm). FAL, FALZ and FALX (finishing allowance) A finishing allowance for roughing can be specified either using the parameters FALZ and FALX if you want to specify different finishing allowances axis-specifically or via the parameter FAL for a finishing allowance that follows the contour. In this case, this value is taken into account in both axes as a finishing allowance. No plausibility check is carried out for the programmed values. In other words: If all three parameters are assigned values, all these finishing allowances are taken into account by the cycle. It is, however, reasonable to decide either on the one or other form of definition of a finishing allowance. Roughing is always carried out up to these finishing allowances. The resulting residual corner is also removed parallel to the contour after each paraxial roughing process immediately so that no additional residual corner cut is required after completion of roughing. If no finishing allowances are programmed, stock is removed when roughing up to the final contour. FF1, FF2 and FF3 (feedrate) It is possible to specify different",
+            "source": "SNUMERIK-808D_manual.pdf",
+            "page": 192,
+            "sheet": "",
+            "score": 0.8131
+        },
+        {
+            "text": "_PARTS $AC_REQUIRED _PARTS $AC_ACTUAL_PARTS $AC_SPECIAL_PART S 0 ... 999 999 999, integer System variable: Total actual count Set number of workpiece Current actual count Count of workpieces - specified by the user N10 IF $AC_ACTUAL_PARTS== 15 .... $AC_ MSNUM Number of active spin- dles read-only $P_ MSNUM Number of pro- grammed spindles read-only $P_NUM_ SPINDLES Number of configured spindles read-only $AA_S[n] Actual speed of spindle n Spindle number n =1 read-only $P_S[n] Last programmed speed of spindle n Spindle number n =1 read-only $AC_ SDIR[n] Current direction of rotation of spindle n Spindle number n =1 read-only $P_ SDIR[n] Last programmed direction of rotation of spindle n Spindle number n =1 read-only $P_ TOOLNO Number of the active tool T - read-only N10 IF $P_TOOLNO==12 GOTOF .... $P_TOOL Active D number of the active tool - read-only N10 IF $P_TOOL==1 GOTOF ....",
+            "source": "SNUMERIK-808D_manual.pdf",
+            "page": 294,
+            "sheet": "",
+            "score": 0.8109
+        },
+        {
+            "text": "6FC5398-5DP10-0BA5, 06/2017 117 11.11.3 Tool offset number D (turning) Functionality It is possible to assign 1 to 9 data fields with different tool offset blocks (for multiple cutting edges) to a specific tool. If a special cutting edge is required, then it can be programmed using D and the appropriate number. If a D word is not written, D1 is automatically effective. If D0 is programmed, the offsets for the tool are ineffective. Programming D... ; Tool offset number: 1 ... 9, D0: No offsets active! A maximum of 64 data fields (D numbers) for tool offset blocks can be stored in the control system simultaneously: Information Tool length compensations become effective immediately when the tool is active; when no D number was programmed with the values of D1. The compensation is retracted with the first programmed traversing of the associated length compensation axis. A tool radius compensation must also be activated by G41/G42. Programming example Tool change: N10 T1 ; Tool 1 is activated with the associated D1 N20 G0 X100 ; The length offset compensation is overlaid here N30 Z100 N40 T4 D2 ; Load tool 4, D2 from T4 is active N50 X50 Z50 N60 G0 Z62 N70 D1 ; D1 for tool 4 active, only cutting edge changed N80 M30 Contents of a compensation memory ● Geometrical dimensions: Length, radius. They consist of several components (geometry, wear). The control system takes into account the components to obtain a resulting dimension (e.g. overall length 1, total radius). The respective overall dimension becomes active when the offset memory is activated. The way in which these values",
+            "source": "SNUMERIK-808D_manual.pdf",
+            "page": 117,
+            "sheet": "",
+            "score": 0.8102
+        },
+        {
+            "text": "6FC5398-5DP10-0BA5, 06/2017 139 This counter registers the number of all workpieces produced since the starting time. When the workpiece setpoint is reached ( $AC_REQUIRED_PARTS, value greater than zero), the counter is automatically zeroed. ● $AC_SPECIAL_PARTS Number of workpieces specified by the user This counter allows users to make a workpiece counting in accordance with their own definition. Alarm output can be defined for the case of identity with $AC_REQUIRED_PARTS (workpiece target). Users must reset the counter themselves. Programming example N10 IF $AC_TOTAL_PARTS==R15 GOTOF SIST ; Count reached? G0 X50 Z50 N80 SIST:G0 X60 Z60 N90 MSG(\"Workpiece setpoint reached\") N100 M0 M30 Display The content of the active system variables is visible in the window opened through the following key operations: → → Window display: ① = $AC_TOTAL_PARTS ⑤ = $AC_CYCLE_TIME ② = $AC_REQUIRED_PARTS ⑥ = $AC_CUTTING_TIME ③ =$AC_ACTUAL_PARTS $AC_SPECIAL_PARTS is not available for display. ⑦ = $AN_SETUP_TIME ④ = $AC_OPERATING_TIME ⑧ = $AN_POWERON_TIME You can also select whether to activate the workpiece counter function through the following key operations: → →",
+            "source": "SNUMERIK-808D_manual.pdf",
+            "page": 139,
+            "sheet": "",
+            "score": 0.8101
+        }
+    ],
+    "nozzle problem": [
+        {
+            "text": "214 6FC5398-5DP10-0BA5, 06/2017 0 = longitudinal thread: 10 = face thread:",
+            "source": "SNUMERIK-808D_manual.pdf",
+            "page": 214,
+            "sheet": "",
+            "score": 0.7891
+        },
+        {
+            "text": "6FC5398-5DP10-0BA5, 06/2017 115 See the following illustration for examples of multi-block contours:",
+            "source": "SNUMERIK-808D_manual.pdf",
+            "page": 115,
+            "sheet": "",
+            "score": 0.782
+        },
+        {
+            "text": "but the axes do not move. • Block search without calculation of the basic conditions. All settings required for execution have to be programmed from the target block (e.g. feedrate, spindle speed, etc.). For the block search to contour/end point, make sure you set MD11450 bit 2 to 1 to sup- press the output of the auxiliary functions. Note that MD11450 is visible only with the manu- facturer password. 6. Make sure the feedrate override is 0%. 7. Press this key on the MCP, and then an alarm 010208 appears for your confirmation whether to continue. 8. Press this key again to execute the program. 9. Turn the feedrate override switch on the MCP slowly to the desired value. NOTICE Damage to workpiece or machine tools For the machining in ISO mode, you must program the desired feedrate from the target block after a block search without calculation. Otherwise, the axis will traverse at the maximum speed with G0 after you execute the program, which may cause damage to the workpiece or the machine tools.",
+            "source": "SNUMERIK-808D_manual.pdf",
+            "page": 49,
+            "sheet": "",
+            "score": 0.7809
+        },
+        {
+            "text": "is output and the cycle is not executed. This error message is also output if the retraction plane is located after the reference plane, i.e. its distance to the final drilling depth is smaller. Programming example: Drilling_centering This program produces three drill holes using the CYCLE81 drilling cycle. The drilling axis is always the Z axis. See the following example for drilling centering_drilling on turning center without tool:",
+            "source": "SNUMERIK-808D_manual.pdf",
+            "page": 155,
+            "sheet": "",
+            "score": 0.7774
+        },
+        {
+            "text": "6FC5398-5DP10-0BA5, 06/2017 211 Interrelation SPL, FPL, APP and ROP (starting, end point, run-in and run-out path) See the following illustration for the parameters for CYCLE99: The programmed starting point (SPL) or end point (FPL) constitutes the original starting point of the thread. The starting point used in the cycles, however, is the starting point brought forward by the run-in path APP. The run-out path (Cut out) begins before the programmed end point FPL. It brings the end position of thread forward so that the end of cut out is equal FPL. Interrelation TDEP, FAL, NRC and NID (thread depth, finishing allowance, number of cuts) The programmed finishing allowance acts paraxially and is subtracted from the specified thread depth TDEP; the remainder is divided into roughing cuts. The cycle will calculate the individual infeed depth automatically, depending on the VARI parameter. When the thread depth is divided into infeeds with constant cutting cross-section, the cutting force will remain constant over all roughing cuts. In this case, the infeed will be performed using different values for the infeed depth. A second version is the distribution of the whole thread depth to constant infeed depths. When doing so, the cutting cross- section becomes larger from cut to cut, but with smaller values for the thread depth, this technology can result in better cutting conditions. The finishing allowance FAL is removed after roughing in one step. Then the idle passes programmed under parameter NID are executed.",
+            "source": "SNUMERIK-808D_manual.pdf",
+            "page": 211,
+            "sheet": "",
+            "score": 0.7767
+        }
+    ],
+    "The carriage speed is not stable; what can be done about it?": [
+        {
+            "text": ", if the spindle runs for the first time after the control system powers on, then you must specify a spindle speed in \"MDA\" mode or the \"T, S, M\" window. Operating sequence 1. Select the machining operating area. 2. Switch to \"JOG\" mode. 3. Press this key on the MCP to rotate the spindle counter-clockwisely.",
+            "source": "SNUMERIK-808D_manual.pdf",
+            "page": 252,
+            "sheet": "",
+            "score": 0.7845
+        },
+        {
+            "text": "but the axes do not move. • Block search without calculation of the basic conditions. All settings required for execution have to be programmed from the target block (e.g. feedrate, spindle speed, etc.). For the block search to contour/end point, make sure you set MD11450 bit 2 to 1 to sup- press the output of the auxiliary functions. Note that MD11450 is visible only with the manu- facturer password. 6. Make sure the feedrate override is 0%. 7. Press this key on the MCP, and then an alarm 010208 appears for your confirmation whether to continue. 8. Press this key again to execute the program. 9. Turn the feedrate override switch on the MCP slowly to the desired value. NOTICE Damage to workpiece or machine tools For the machining in ISO mode, you must program the desired feedrate from the target block after a block search without calculation. Otherwise, the axis will traverse at the maximum speed with G0 after you execute the program, which may cause damage to the workpiece or the machine tools.",
+            "source": "SNUMERIK-808D_manual.pdf",
+            "page": 49,
+            "sheet": "",
+            "score": 0.781
+        },
+        {
+            "text": "6FC5398-5DP10-0BA5, 06/2017 111 F ; Feedrate in mm/revolution - as for G95 Remark: If G94 instead of G95 was active before, a new appropriate F value must be written. See the following illustration for constant cutting rate G96: Rapid traverse With rapid traverse G0, there is no change in speed. Exception: If the contour is approached at rapid traverse and the next block contains an interpolation type G1 or G2, G3, CIP, CT (contour block), then the speed for the contour block is applied already in the approach block with G0. Upper speed limit LIMS= When machining from large to small diameters, the spindle speed can increase significantly. In this case, it is recommended to program the upper spindle speed limitation LIMS=... . LIMS is only effective with G96 and G97. By programming LIMS=..., the value entered into the setting data (SD43230: SPIND_MAX_VELO_LIMS) is overwritten. This SD takes effect when LIMS is not written. The upper limit speed programmed with G26 or defined via machine data cannot be overwritten with LIMS=. Deactivate constant cutting rate: G97 The function \"Constant cutting rate\" is deactivated by G97. If G97 is active, a programmed S word is given in RPM as the spindle speed . If no new S word is programmed, the spindle turns at the last defined speed with G96 function active. Programming example N10 M3 S1000 ; Spindle's direction of rotation N20 G96 S120 LIMS=2500 ; Activate constant cutting speed, 120 m/min, speed limit 2,500 r.p.m. N30 G0 X150 ; no change in speed, because block N31 with G0 N40 X50 Z20 ; no change in speed, because block N32 with G0",
+            "source": "SNUMERIK-808D_manual.pdf",
+            "page": 111,
+            "sheet": "",
+            "score": 0.7799
+        },
+        {
+            "text": "aces, see the SINUMERIK 808D/SINUMERIK 808D ADVANCED Function Manual. Preconditions ● You must not select fixed feedrate, dry-run feedrate, thread cutting, or tapping. Note If you have not programmed the feedrate in the previous blocks, the control system prompts an alarm which indicates the absence of feedrate. ● The axes have been referenced. For more information about how to reference the axes, see Chapter \"Switching on and referencing (Page 19)\". ● The option of \"Contour handwheel\" is activated with a license key. For more information about how to activate an option, see the SINUMERIK 808D/SINUMERIK 808D ADVANCED Commissioning Manual. ● You have assigned the handwheel to the first geometric axis and activated it. For more information, see Section \"Assigning the handwheel through the MCP (Page 24)\". Activating the contour handwheel in \"AUTO\" mode 1. Open the desired NC program in the part program editor window. For more information about how to create or edit a part program, see Chapter \"Creating part programs (Page 32)\". 2. Enter the mandatory instructions \"G1\" (or \"G2\"/\"G3\"), \"G94\", \"G60\" and \"FD=0\" in the blocks. The blocks are saved automatically. See the following example:",
+            "source": "SNUMERIK-808D_manual.pdf",
+            "page": 256,
+            "sheet": "",
+            "score": 0.7796
+        },
+        {
+            "text": "h control mode continues to be active N30 Z-40 N40 G60 X30 Z-50 ; Switching over to exact stop N50 X45 Z-70 N60 M30 Look-ahead velocity control In the continuous-path control mode with G64, the control system determines the velocity control for several NC blocks in advance automatically. This enables acceleration and deceleration across multiple blocks with approximately tangential transitions. For paths that consist of short travels in the NC blocks, higher velocities can be achieved than without look ahead.",
+            "source": "SNUMERIK-808D_manual.pdf",
+            "page": 101,
+            "sheet": "",
+            "score": 0.778
+        }
+    ]
+}
