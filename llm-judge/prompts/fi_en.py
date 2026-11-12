@@ -1,7 +1,8 @@
 """FI -> EN: Finnish operator queries translated to English for semantic search."""
 from prompts.common import MQM_TAXONOMY, OUTPUT_RULES, PROTECTED_RULE, render_glossary
 
-PROMPT_VERSION = "fi_en-v1"
+
+PROMPT_VERSION = "fi_en-v2"
 
 SEVERITIES = dict(
     critical="a key technical noun, component, alarm code or the problem itself is lost or wrong, "
@@ -27,6 +28,10 @@ of the operator's intent matters most. Fluency and style matter little.
 REFERENCE_BASED = """Evaluate the candidate translation of the Finnish source.
 The reference is a manually made golden translation that shows the correct terminology and intent.
 
+For every error, fill `reference_span` with the exact words copied from the reference that correspond
+to the erroneous part, i.e. what the candidate should have said. Copy them verbatim from <reference_en>.
+If the reference has no corresponding words (e.g. for an addition error), use an empty string.
+
 <source_fi>
 {source}
 </source_fi>
@@ -40,6 +45,7 @@ The reference is a manually made golden translation that shows the correct termi
 </candidate_en>"""
 
 REFERENCE_FREE = """Evaluate the candidate translation of the Finnish source.
+There is no reference translation, so leave `reference_span` as an empty string for every error.
 
 <source_fi>
 {source}

@@ -26,6 +26,11 @@ Status = Literal["ok", "judge_error", "skipped_wrong_source_lang", "skipped_empt
 class ErrorSpan(BaseModel):
     span: str = Field(description="Exact substring of the translation that contains the error, or empty string for omissions")
     source_span: str = Field(description="The corresponding part of the source text")
+    reference_span: str = Field(
+        "",
+        description="Only when a reference translation is given: the exact words of the reference that "
+                    "correspond to this error, i.e. the correct translation. Empty string otherwise.",
+    )
     category: Category
     severity: Severity
     explanation: str = Field(description="One short sentence why this is an error")
@@ -46,6 +51,7 @@ class ItemResult(BaseModel):
     id: str
     index: int
     direction: Direction
+    eval_model: str = "" 
     mode: Mode
     status: Status
     source: str
@@ -63,7 +69,7 @@ class ItemResult(BaseModel):
     chrf: float | None = None
     bleu: float | None = None
 
-    model: str
+    model: str  # judge model
     base_url: str
     prompt_version: str
     prompt_hash: str
