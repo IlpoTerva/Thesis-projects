@@ -1,6 +1,6 @@
 from __future__ import annotations
 import json
-from typing import Annotated, Any,  TypedDict
+from typing import Annotated, Any,  TypedDict, Literal
 import re
 from langchain_core.messages import (AIMessage, 
                                      AnyMessage, 
@@ -23,9 +23,11 @@ from app.schemas import ChatResponse
 from pipelines.save_io import (in_content, 
                                out_content, 
                                options_content,
+                               chunk_content,
                                save_content_in, 
                                save_content_out,
-                               save_options)
+                               save_options,
+                               save_chunks)
 
 
 SYSTEM_PROMPT = """
@@ -132,6 +134,8 @@ class AgentState(TypedDict):
     context: list[dict[str, Any]]
     answer: str
     lang: str
+    shown_options: list[str]
+    question: str
 
     
 LANG_DETECTOR = LanguageDetectorBuilder.from_languages(Language.FINNISH, Language.ENGLISH).build()
@@ -186,7 +190,7 @@ def translate_out_node(state: AgentState):
     return {"answer": trans}
 
 ALARM_RE = re.compile(r"\b(?:\d{4,6}|[AF]\d{2,5}\b)")
-TROUBLE_WORDS = ("error", "alarm", "fault", "vika", "hälytys", "virhe")
+TROUBLE_WORDS = ("error", "alarm", "fault", "vika", "hälytys", "virhe", "problem")
 
 def _rule_based_route(text: str) -> str:
     if ALARM_RE.search(text) or any(w in text for w in TROUBLE_WORDS):
@@ -204,6 +208,8 @@ def manuals_node(state: AgentState):
     query = state["query"] if state["query"] != "" else state["user_message"]
     print(f"[MANUAL NODE] query: {query}" )
     ret = tool_retrieve(query)
+    chunkContent = chunk_content(query=query, chunks=ret["result"].get("chunks", []))
+    save_chunks(chunkContent)
     return {"context": ret["result"].get("chunks", [])}
     
 
@@ -215,57 +221,50 @@ def troubleshoot_node(state: AgentState):
     candidates = out.get("candidates", [])
     return {"query":query, "candidates": candidates, "context": candidates}
 
-
-
-def clarify_node(state: AgentState):
-    """
-    Let LLM ask more clarifying questions from user.
-    """
+def build_question_node(state: AgentState):
+    question, options = _build_question(state["candidates"])
     
+    return {"question": question, "shown_options": options}
+
+def clarify_node(state: AgentState) -> Command[Literal["answer", "describe", "troubleshoot"]]:
     cands = state["candidates"]
-    question, options = _build_question(candidates=cands)
-    question_org, options_org = question, options
-    if _detect_language(question, "en") != state["lang"]: #question always in English first
-        question = _translate(question, state["lang"]) #translate question to user language
-        #options = [_translate(opt) for opt in options] #NOTE works but for saving using another list in the middle
-        
-        options_tran = [_translate(opt, state["lang"]) for opt in options] #Translate options  to user language
-        #Save original and translated contents to file for analysis
-        content = options_content(original=options, translated=options_tran)
-        save_options(content=content)
-        options = options_tran
-    
-            
-    print(f"[CLARIFY] question: {question}, options: {options}")
-    reply = str(interrupt({"question": question, "options": options}))
-    idx = _resolve_reply(reply=reply, options=options)
-    reply_en = _translate(reply, "en") if state["lang"] != "en" else reply
-    update = {"steps": state["steps"]+1,
-              "messages": [AIMessage(content=question_org), HumanMessage(content=options_org[idx])] #Giving the model the original English versions instead of translated
-              }
+    shown = state["shown_options"]
+    reply = str(interrupt({"question": state["question"], "options": shown}))
+    idx = _resolve_reply(reply, shown)
+    steps = state["steps"] + 1
+
+    # 1) User picked a concrete case -> answer with exactly that case
     if idx is not None and idx < len(cands):
-        update["query"] = f"{state['query']} {reply_en}"
-        update["candidates"] = cands[idx]
-        update["resolved"] = True #NOTE possibly rename the 'resolved' state 
+        case = cands[idx]
+        return Command(goto="answer", update={
+            "steps": steps,
+            "candidates": [case],
+            "context": [case],
+            "query": case["symptom"],
+            "messages": [AIMessage(content="Which case matches?"),
+                         HumanMessage(content=case["symptom"])],
+        })
 
+    # 2) "None of these" -> never show these cases again, ask for a description
+    if idx == len(shown) - 1:
+        return Command(goto="describe", update={
+            "steps": steps,
+            "excluded": state["excluded"] + [c["id"] for c in cands],
+        })
 
-    elif idx is not None and idx == (len(cands) - 1): #If the user answers: 'None of these'
-        update["candidates"] = cands[idx]
-    
-    else: #NOTE never getting here since (in the gui) indexes cannot go past len(cands)
-        update["query"] = f"{state['query']} {reply_en}"
-        update["excluded"] = state["excluded"]+[c["id"] for c in cands]
-    return update
+    # 3) Unparseable free text -> treat it as extra description and search again
+    reply_en = _translate(reply, "en") if state["lang"] != "en" else reply
+    return Command(goto="troubleshoot", update={
+        "steps": steps,
+        "query": f"{state['query']} {reply_en}".strip(),
+    })
 
 def describe_node(state: AgentState):
-    """
-    Let the user describe the issue if the suggested cases does not describe the issue
-    """
-    init_q = state["query"]
     base = "Describe the issue more specifically: "
-    reply = str(interrupt({"question": base, "options": None}))
+    question = _translate(base, state["lang"]) if state["lang"] != "en" else base
+    reply = str(interrupt({"question": question, "options": None}))
     reply_en = _translate(reply, "en") if state["lang"] != "en" else reply
-    return {"query": f"{init_q} {reply_en}"}
+    return {"query": reply_en, "steps": state["steps"] + 1}
 
 def answer_node(state: AgentState):
     
@@ -328,7 +327,8 @@ def _build_graph()-> Any:
     g.add_node("classify", classify_node)
     g.add_node("manual", manuals_node)
     g.add_node("troubleshoot", troubleshoot_node)
-    g.add_node("clarify", clarify_node)
+    g.add_node("build_question", build_question_node)
+    g.add_node("clarify", clarify_node)  
     g.add_node("describe", describe_node)
     g.add_node("answer", answer_node)
     g.add_node("finalize", finalize_node)
@@ -344,12 +344,9 @@ def _build_graph()-> Any:
 
     
     #---TROUBLESHOOT---
-    g.add_conditional_edges("troubleshoot",
-                            _route_after_troubleshoot,
-                            {"clarify": "clarify", "answer": "answer"})
-    g.add_conditional_edges("clarify",
-                            _route_after_clarify,
-                            {"troubleshoot": "troubleshoot", "describe": "describe"})
+    g.add_conditional_edges("troubleshoot", _route_after_troubleshoot,
+                        {"clarify": "build_question", "answer": "answer", "describe": "describe"})
+    g.add_edge("build_question", "clarify")
     g.add_edge("describe", "troubleshoot")
     #---ANSWERS---
     g.add_conditional_edges("answer",
@@ -373,6 +370,8 @@ def _initial_state(message: str) -> dict[str, Any]:
         "excluded": [],
         "resolved": False,
         "user_message":message,
+        "shown_options": [],
+        "question": ""
     }
 
 # generate answer for CLI

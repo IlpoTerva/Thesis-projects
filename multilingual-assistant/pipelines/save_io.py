@@ -21,6 +21,10 @@ class options_content:
     original: list[str]
     translated: list[str]
 
+@dataclass
+class chunk_content: 
+    query: str
+    chunks: list[str]
 
 def save_content_in(content: in_content):
     if os.path.exists(settings.TRANSLATE_IN_FILE):
@@ -68,4 +72,16 @@ def save_options(content: options_content):
     
 
     with open(settings.OPTIONS_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+
+def save_chunks(content: chunk_content):
+    if os.path.exists(settings.CHUNK_FILE):
+        with open(settings.CHUNK_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    else: 
+        data = {}
+
+    data[content.query] = content.chunks
+
+    with open(settings.CHUNK_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)

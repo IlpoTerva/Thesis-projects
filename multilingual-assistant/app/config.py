@@ -56,6 +56,6 @@ class Settings:
     TRANSLATE_IN_FILE = _resolve_path("translate_in.json")
     TRANSLATE_OUT_FILE = _resolve_path("translate_out.json")
     OPTIONS_FILE = _resolve_path("options.json")
-    
+    CHUNK_FILE = _resolve_path("retrieval_chunks.json")
 
 settings = Settings()
