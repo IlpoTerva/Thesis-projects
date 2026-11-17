@@ -25,6 +25,9 @@ def _parse_weights(value: str) -> dict[str, float]:
 
 class Settings:
     # ---- Judge LLM (any OpenAI-compatible endpoint: Ollama, OpenAI, OpenRouter, vLLM...) ----
+    PROVIDER = "anthropic" #NOTE swap to ollama for local models 
+    #PROVIDER = "ollama" #NOTE swap to anthropic for claude models
+
     JUDGE_BASE_URL = os.getenv("JUDGE_BASE_URL", "http://localhost:11434/v1")
     JUDGE_API_KEY = os.getenv("JUDGE_API_KEY", "ollama")
     JUDGE_MODEL = os.getenv("JUDGE_MODEL", "qwen2.5:14b-instruct")

@@ -8,8 +8,8 @@ from types import ModuleType
 from typing import Any
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
-from langchain_openai import ChatOpenAI
-
+from langchain_openai import ChatOpenAI #Swapped to ChatAnthropic
+from langchain_anthropic import ChatAnthropic
 from checks import merge_errors, run_checks
 from config import settings
 from metrics import is_pass, mqm_penalty, mqm_score, sentence_bleu, sentence_chrf
@@ -31,22 +31,35 @@ def item_id(source: str, output: str, ground: str = "") -> str:
 def prompt_hash(text: str) -> str:
     return hashlib.sha1(text.encode("utf-8")).hexdigest()[:12]
 
+def build_llm(provider: str, model: str, base_url: str | None = None, api_key: str | None = None):
+    common = dict(
+        model=model,
+        max_retries=2,
+        max_tokens=2048,
+        timeout=float(settings.JUDGE_TIMEOUT),
+    )
+    if provider == "anthropic":
+        return ChatAnthropic(api_key=settings.JUDGE_API_KEY, **common)
+    if provider == "ollama":
+        return ChatOpenAI(
+            base_url=base_url or settings.JUDGE_BASE_URL,
+            api_key=api_key or "ollama",
+            temperature=float(settings.JUDGE_TEMPERATURE),
+            **common,
+        )
+    raise ValueError(f"Unknown judge provider: {provider!r}")
+
+
 
 class Judge:
-    def __init__(self, model: str | None = None, base_url: str | None = None, api_key: str | None = None,
+    def __init__(self, model: str | None = None, provider: str | None = None, base_url: str | None = None, api_key: str | None = None,
                  samples: int | None = None, glossary: bool | None = None):
         self.model = model or settings.JUDGE_MODEL
+        self.provider = provider or settings.PROVIDER
         self.base_url = base_url or settings.JUDGE_BASE_URL
         self.samples = samples or settings.JUDGE_SAMPLES
         self.glossary = settings.USE_GLOSSARY if glossary is None else glossary
-        llm = ChatOpenAI(
-            base_url=self.base_url,
-            api_key=api_key or settings.JUDGE_API_KEY,
-            model=self.model,
-            temperature=settings.JUDGE_TEMPERATURE,
-            timeout=settings.JUDGE_TIMEOUT,
-            max_retries=2,  # transport-level retries (rate limits, timeouts)
-        )
+        llm = build_llm(provider=self.provider, model=self.model, base_url=self.base_url, api_key=api_key)
         self.llm = llm.with_structured_output(MQMAnnotation, method=settings.JUDGE_STRUCTURED, include_raw=True)
 
     def annotate(self, system: str, user: str) -> tuple[MQMAnnotation | None, list[str]]:
