@@ -25,8 +25,11 @@ def mqm_score(penalty: float, source: str) -> float:
     return max(0.0, 100.0 - penalty * 100.0 / words)
 
 
-def is_pass(errors: list[ErrorSpan], penalty: float) -> bool:
-    return not any(e.severity == "critical" for e in errors) and penalty < settings.PASS_MAX_PENALTY
+def is_pass(errors: list[ErrorSpan], penalty: float, source: str) -> bool:
+    if any(e.severity == "critical" for e in errors):
+        return False
+    words = max(settings.MIN_NORM_WORDS, len(source.split()))  # e.g. 20
+    return penalty * 100.0 / words <= settings.PASS_MAX_PENALTY_PER_100
 
 
 def sentence_chrf(hyp: str, ref: str) -> float:

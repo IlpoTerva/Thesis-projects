@@ -233,7 +233,7 @@ def main():
     p.add_argument("--in", dest="in_file", default=settings.TRANSLATE_IN_FILE, help="FI->EN input json")
     p.add_argument("--out", dest="out_file", default=settings.TRANSLATE_OUT_FILE, help="EN->FI input json")
     p.add_argument("--model", help="override JUDGE_MODEL")
-    p.add_argument("--eval-model", default="qwen14", choices=list(EVAL_MODELS),
+    p.add_argument("--eval-model", default="qwen14", choices=list(EVAL_MODELS)+["all"],
                    help="model whose translations are evaluated")
     p.add_argument("--base-url", help="override JUDGE_BASE_URL")
     p.add_argument("--samples", type=int, help="judge each item N times, keep median (JUDGE_SAMPLES)")
@@ -250,8 +250,14 @@ def main():
     judge = Judge(model=args.model, base_url=args.base_url, samples=args.samples,
                   glossary=False if args.no_glossary else None)
     inputs = {"fi-en": args.in_file, "en-fi": args.out_file}
-    for direction in (["fi-en", "en-fi"] if args.direction == "all" else [args.direction]):
-        run_direction(direction, args.eval_model, judge, inputs[direction], args.limit, args.force)
+    
+    eval_models = list(EVAL_MODELS) if args.eval_model == "all" else [args.eval_model]
+    directions = ["fi-en", "en-fi"] if args.direction == "all" else [args.direction]
+    print(f"running pipeline for models: {eval_models} with directions: {directions}")
+    for direction in directions:
+        for eval_model in eval_models:
+            print(f"Analysis for model: {eval_model}, direction: {direction}")
+            run_direction(direction, eval_model, judge, inputs[direction], args.limit, args.force)
 
 
 if __name__ == "__main__":
