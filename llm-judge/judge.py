@@ -129,7 +129,7 @@ class Judge:
         res.penalty = mqm_penalty(res.errors)
         res.score = mqm_score(res.penalty, source)
         res.has_critical = any(e.severity == "critical" for e in res.errors)
-        res.passed = is_pass(res.errors, res.penalty)
+        res.passed = is_pass(res.errors, res.penalty, res.source)
         if ground.strip():
             res.chrf = sentence_chrf(output, ground)
             res.bleu = sentence_bleu(output, ground)
