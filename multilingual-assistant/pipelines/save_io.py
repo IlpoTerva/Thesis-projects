@@ -32,7 +32,7 @@ def save_content_in(content: in_content):
             data = json.load(f)
     else:
         data = {}
-    model = settings.OLLAMA_MODEL
+    model = settings.TRANSLATE_MODEL
     if model in data.keys():
         data[model].append(asdict(content))        
     else:
@@ -47,7 +47,7 @@ def save_content_out(content: out_content):
             data = json.load(f)
     else:
         data = {}
-    model = settings.OLLAMA_MODEL
+    model = settings.TRANSLATE_MODEL
     if model in data.keys():
         data[model].append(asdict(content))
     else:        
@@ -80,8 +80,10 @@ def save_chunks(content: chunk_content):
             data = json.load(f)
     else: 
         data = {}
-
-    data[content.query] = content.chunks
-
+    model = settings.OLLAMA_MODEL
+    if model not in data.keys():
+        data[model] = [{content.query: content.chunks}]
+    else:
+        data[model].append({content.query: content.chunks})
     with open(settings.CHUNK_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)

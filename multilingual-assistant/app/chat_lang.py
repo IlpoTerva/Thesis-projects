@@ -36,8 +36,9 @@ DO NOT make up fault codes or instructions. Only use retrieved information and t
 If database does not contain relevant information, respond with "I don't know" or "I don't have enough information to answer that."
 
 """
+TRANSLATE_PROMPT ="""
 
-TRANSLATE_PROMPT ="""You are a translator for machine operation and maintenance texts.
+You are a translator for machine operation and maintenance texts.
 Translate the text inside <text> tags into {target}.
 
 Rules:
@@ -51,15 +52,25 @@ Rules:
 
 
 """
+
+TRANSLATE_PROMPT_GEMMA = (
+    "You are a professional {source_lang} ({source_code}) to {target_lang} ({target_code}) translator. "
+    "Your goal is to accurately convey the meaning and nuances of the original {source_lang} text "
+    "while adhering to {target_lang} grammar, vocabulary, and cultural sensitivities.\n"
+    "Produce only the {target_lang} translation, without any additional explanations or commentary. "
+    "Please translate the following {source_lang} text into {target_lang}:\n\n\n"
+    "{text}"
+)
+
 TRANSLATE_PROMPT_EXAMPLES = TRANSLATE_PROMPT
 
 
-def _make_llm(temp: int=0)-> Any:
+def _make_llm(temp: int=0,translate:bool=False)-> Any:
 
     llm = ChatOpenAI(
         base_url=settings.OLLAMA_BASE_URL,
         api_key="ollama",
-        model_name=settings.OLLAMA_MODEL,
+        model_name=settings.TRANSLATE_MODEL if translate else settings.OLLAMA_MODEL,
         temperature=temp,
     )
 
@@ -68,7 +79,7 @@ def _make_llm(temp: int=0)-> Any:
 
 #LLM_TOOLS = _make_llm(with_tools=True)
 LLM_PLAIN = _make_llm()
-LLM_TRANSLATE = _make_llm(temp=0.5)
+LLM_TRANSLATE = _make_llm(temp=0.1, translate=True)
 
 _MAX_TOOL_RESULT_CHARS = 4000
 
@@ -159,12 +170,17 @@ _PROTECT_RE = re.compile(
      r"\b(?:MD\d+(?:\[\d+\])?|X\d{1,3}|DB\d+\.DB[XB]\d+(?:\.\d+)?|[AF]\d{2,5}|\d{4,6})\b|\[\d+\]"
 )
 
-def _translate(text: str, target: str) -> str:
-    if not text.strip() or target == "en" and _detect_language(text=text, fallback="en") == "en":
+def _translate(text: str,source: str, target: str) -> str:
+    if not text.strip() or target == source:
+        return text  
+    if _detect_language(text=text, fallback="en") == target:
         return text
+    
+    prompt = TRANSLATE_PROMPT_GEMMA.format(source_lang=LANG_NAMES.get(source, source), source_code=source, 
+                                           target_lang=LANG_NAMES.get(target, target), target_code=target, 
+                                           text=text.strip())
     msgs = [
-        SystemMessage(content=TRANSLATE_PROMPT.format(target=LANG_NAMES.get(target, target))),
-        HumanMessage(content=f"<text>\n{text}\n</text>")
+        HumanMessage(content=prompt)
     ]
     must_keep = set(_PROTECT_RE.findall(text))
     out = ""
@@ -178,13 +194,13 @@ def _translate(text: str, target: str) -> str:
 def translate_in_node(state: AgentState):
     q = state["user_message"]
     if state["lang"] != "en":
-        q = _translate(state["user_message"], "en")
+        q = _translate(state["user_message"], source=state["lang"], target="en")
         content = in_content(original=state["user_message"], translated=q)
         save_content_in(content)
     return {"query": q, "messages": [HumanMessage(content=q)]}
 
 def translate_out_node(state: AgentState):
-    trans = _translate(state["answer"], state["lang"])
+    trans = _translate(state["answer"],source="en",target=state["lang"])
     content = out_content(q=state["user_message"], original=state["answer"], translated=trans)
     save_content_out(content)
     return {"answer": trans}
@@ -233,7 +249,6 @@ def clarify_node(state: AgentState) -> Command[Literal["answer", "describe", "tr
     idx = _resolve_reply(reply, shown)
     steps = state["steps"] + 1
 
-    # 1) User picked a concrete case -> answer with exactly that case
     if idx is not None and idx < len(cands):
         case = cands[idx]
         return Command(goto="answer", update={
@@ -245,15 +260,13 @@ def clarify_node(state: AgentState) -> Command[Literal["answer", "describe", "tr
                          HumanMessage(content=case["symptom"])],
         })
 
-    # 2) "None of these" -> never show these cases again, ask for a description
     if idx == len(shown) - 1:
         return Command(goto="describe", update={
             "steps": steps,
             "excluded": state["excluded"] + [c["id"] for c in cands],
         })
 
-    # 3) Unparseable free text -> treat it as extra description and search again
-    reply_en = _translate(reply, "en") if state["lang"] != "en" else reply
+    reply_en = _translate(reply, state["lang"],"en") if state["lang"] != "en" else reply
     return Command(goto="troubleshoot", update={
         "steps": steps,
         "query": f"{state['query']} {reply_en}".strip(),
@@ -261,9 +274,9 @@ def clarify_node(state: AgentState) -> Command[Literal["answer", "describe", "tr
 
 def describe_node(state: AgentState):
     base = "Describe the issue more specifically: "
-    question = _translate(base, state["lang"]) if state["lang"] != "en" else base
+    question = _translate(base,source="en", target=state["lang"]) if state["lang"] != "en" else base
     reply = str(interrupt({"question": question, "options": None}))
-    reply_en = _translate(reply, "en") if state["lang"] != "en" else reply
+    reply_en = _translate(reply,source=state["lang"], target="en") if state["lang"] != "en" else reply
     return {"query": reply_en, "steps": state["steps"] + 1}
 
 def answer_node(state: AgentState):

@@ -20,6 +20,8 @@ class Settings:
     OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1") #http://localhost:11434/api/chat for ollama api
     OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:14b-instruct")
     OLLAMA_MODEL_FALLBACK = os.getenv("OLLAMA_MODEL_FALLBACK", "qwen2.5:7b-instruct")
+
+    TRANSLATE_MODEL = os.getenv("TRANSLATE_MODEL", "qwen2.5:14b-instruct")
     
     LLM_MODELS = [OLLAMA_MODEL, OLLAMA_MODEL_FALLBACK]
     # ---- Embeddings + Vector store (all local) ----
@@ -53,9 +55,9 @@ class Settings:
         }
     SUPPORTED_LANGUAGES = [""]
 
-    TRANSLATE_IN_FILE = _resolve_path("translate_in.json")
-    TRANSLATE_OUT_FILE = _resolve_path("translate_out.json")
+    TRANSLATE_IN_FILE = _resolve_path("results/translations_v2/translate_in.json")
+    TRANSLATE_OUT_FILE = _resolve_path("results/translations_v2/translate_out.json")
     OPTIONS_FILE = _resolve_path("options.json")
-    CHUNK_FILE = _resolve_path("retrieval_chunks.json")
+    CHUNK_FILE = _resolve_path("results/chunks/retrieval_chunks.json")
 
 settings = Settings()
