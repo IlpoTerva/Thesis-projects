@@ -12,7 +12,7 @@ from langchain_openai import ChatOpenAI #Swapped to ChatAnthropic
 from langchain_anthropic import ChatAnthropic
 from checks import merge_errors, run_checks
 from config import settings
-from metrics import is_pass, mqm_penalty, mqm_score, sentence_bleu, sentence_chrf
+from metrics import is_pass, mqm_penalty, mqm_score, sentence_bleu, sentence_chrf, norm_words
 from prompts import en_fi, fi_en
 from schemas import ItemResult, JudgedError, MQMAnnotation
 
@@ -35,7 +35,7 @@ def build_llm(provider: str, model: str, base_url: str | None = None, api_key: s
     common = dict(
         model=model,
         max_retries=2,
-        max_tokens=2048,
+        max_tokens=8192,
         timeout=float(settings.JUDGE_TIMEOUT),
     )
     if provider == "anthropic":
@@ -125,11 +125,11 @@ class Judge:
         else:
             res.errors = check.errors
             res.overall_comment = "Decided by rule-based checks only."
-
+        n_words = norm_words(source=source, ground=ground, direction=direction)
         res.penalty = mqm_penalty(res.errors)
-        res.score = mqm_score(res.penalty, source)
+        res.score = mqm_score(res.penalty, n_words)
         res.has_critical = any(e.severity == "critical" for e in res.errors)
-        res.passed = is_pass(res.errors, res.penalty, res.source)
+        res.passed = is_pass(res.errors, res.penalty, n_words)
         if ground.strip():
             res.chrf = sentence_chrf(output, ground)
             res.bleu = sentence_bleu(output, ground)

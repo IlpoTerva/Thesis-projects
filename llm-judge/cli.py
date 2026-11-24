@@ -25,6 +25,7 @@ EVAL_MODELS = {
     "qwen14": "qwen2.5:14b-instruct",
     "qwen7": "qwen2.5:7b-instruct",
     "llama3": "llama3.2:3b",
+    "gemma4": "translategemma:4b"
 }
 
 MISSING = "<missing>"  # error has a correct term but no span in the output (e.g. omission)
@@ -231,7 +232,7 @@ def main():
     p.add_argument("direction", choices=["fi-en", "en-fi", "all", "compare"],
                    help="direction to judge, or 'compare' to combine existing per-model results")
     p.add_argument("--in", dest="in_file", default=settings.TRANSLATE_IN_FILE, help="FI->EN input json")
-    p.add_argument("--out", dest="out_file", default=settings.TRANSLATE_OUT_FILE, help="EN->FI input json")
+    p.add_argument("--out", dest="out_file", default=settings.FAILED_OUT, help="EN->FI input json")
     p.add_argument("--model", help="override JUDGE_MODEL")
     p.add_argument("--eval-model", default="qwen14", choices=list(EVAL_MODELS)+["all"],
                    help="model whose translations are evaluated")
@@ -251,9 +252,10 @@ def main():
                   glossary=False if args.no_glossary else None)
     inputs = {"fi-en": args.in_file, "en-fi": args.out_file}
     
-    eval_models = list(EVAL_MODELS) if args.eval_model == "all" else [args.eval_model]
+    eval_models = list(EVAL_MODELS) if args.eval_model == "all" else args.eval_model.split()
+    #eval_models = ["qwen7", "llama3"]
     directions = ["fi-en", "en-fi"] if args.direction == "all" else [args.direction]
-    print(f"running pipeline for models: {eval_models} with directions: {directions}")
+    print(f"running pipeline for models: {eval_models} with directions: {directions}, with file {inputs[args.direction]}")
     for direction in directions:
         for eval_model in eval_models:
             print(f"Analysis for model: {eval_model}, direction: {direction}")

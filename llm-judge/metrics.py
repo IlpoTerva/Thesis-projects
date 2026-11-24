@@ -10,27 +10,27 @@ from config import settings
 from schemas import ErrorSpan, ItemResult
 
 
-_CHRF = CHRF()
+_CHRF = CHRF(word_order=2)
 _BLEU_SENT = BLEU(effective_order=True)
 _BLEU_CORPUS = BLEU()
 
+def norm_words(source: str, ground: str | None, direction: str) -> int:
+    en_txt = source if direction == "en-fi" else (ground or source)
+    return max(20, len(en_txt.split()))
 
 def mqm_penalty(errors: Iterable[ErrorSpan]) -> float:
     return sum(settings.MQM_WEIGHTS[e.severity] for e in errors)
 
 
-def mqm_score(penalty: float, source: str) -> float:
+def mqm_score(penalty: float, n_words: int) -> float:
     """Penalty normalised per 100 source words, mapped to 0..100 (100 = no errors)."""
-    words = max(1, len(source.split()))
-    return max(0.0, 100.0 - penalty * 100.0 / words)
+    return max(0.0, 100.0 - penalty * 100.0 / n_words)
 
 
-def is_pass(errors: list[ErrorSpan], penalty: float, source: str) -> bool:
+def is_pass(errors: list[ErrorSpan], penalty: float, n_words:int) -> bool:
     if any(e.severity == "critical" for e in errors):
         return False
-    words = len(source.split())
-    budget = max(1, settings.PASS_MAX_PENALTY * words / 100)
-    return penalty <= budget
+    return penalty <= settings.PASS_MAX_PENALTY * n_words / 100
 
 
 def sentence_chrf(hyp: str, ref: str) -> float:

@@ -40,8 +40,9 @@ class Settings:
     USE_GLOSSARY = os.getenv("JUDGE_USE_GLOSSARY", "1") == "1"
 
     # ---- Data ----
-    TRANSLATE_IN_FILE = _resolve_path(os.getenv("TRANSLATE_IN_FILE", "../multilingual-assistant/translate_in.json"))
-    TRANSLATE_OUT_FILE = _resolve_path(os.getenv("TRANSLATE_OUT_FILE", "../multilingual-assistant/translate_out.json"))
+    TRANSLATE_IN_FILE = _resolve_path(os.getenv("TRANSLATE_IN_FILE", "../multilingual-assistant/results/translations/translate_in.json"))
+    TRANSLATE_OUT_FILE = _resolve_path(os.getenv("TRANSLATE_OUT_FILE", "../multilingual-assistant/results/translations/translate_out.json"))
+    FAILED_OUT = _resolve_path(os.getenv("FAILED_OUT_FILE", "../multilingual-assistant/results/translations/failed_out.json"))
     RESULTS_DIR = _resolve_path(os.getenv("RESULTS_DIR", "results"))
 
     # ---- Scoring ----
