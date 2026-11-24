@@ -3,6 +3,6 @@
 __pycache__/
 .pyc
 **/chroma_store/
-
+code-agent/
 
 node_modules/
